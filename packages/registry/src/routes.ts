@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { cors } from 'hono/cors';
 import { eq, like, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { agents, capabilities, reputationScores, reputationEvents, type Db } from './db.js';
@@ -6,6 +7,9 @@ import { calculateReputation, type ReputationInput } from '@agentnet/reputation'
 
 export function createRoutes(db: Db) {
   const app = new Hono();
+
+  // Enable CORS for dashboard and external clients
+  app.use('*', cors());
 
   // ── Health ───────────────────────────────────────────────────────────────
 
