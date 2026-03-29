@@ -11,7 +11,7 @@ interface Particle {
 
 function HeroCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const mouseRef = useRef({ x: 0, y: 0 });
+  const mouseRef = useRef({ x: -1, y: -1 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -30,47 +30,49 @@ function HeroCanvas() {
     const w = () => canvas.offsetWidth;
     const h = () => canvas.offsetHeight;
 
-    const agentNames = ['Weather', 'Translator', 'Flights', 'CodeReview', 'Research', 'Prices', 'News', 'Orchestrator'];
-    const agentColors = ['#d4a843', '#7b7bea', '#00d4aa', '#e5484d', '#5b5bd6', '#e8c56a', '#06b6d4', '#d4a843'];
-
-    const particles: Particle[] = [
-      { x: 0.5, y: 0.48, vx: 0, vy: 0, radius: 20, color: '#5b5bd6', label: 'WYRD', type: 'registry' },
+    // Agent definitions — fixed orbital positions, different distances
+    const agentDefs = [
+      { name: 'Weather',    color: '#d4a843', orbit: 0.32, speed: 0.0008, offset: 0.0, r: 10 },
+      { name: 'Translator', color: '#7b7bea', orbit: 0.28, speed: -0.0006, offset: 1.2, r: 9 },
+      { name: 'Flights',    color: '#00d4aa', orbit: 0.35, speed: 0.0005, offset: 2.5, r: 8 },
+      { name: 'Security',   color: '#e5484d', orbit: 0.22, speed: -0.001, offset: 3.8, r: 11 },
+      { name: 'Research',   color: '#5b5bd6', orbit: 0.30, speed: 0.0007, offset: 5.0, r: 9 },
+      { name: 'News',       color: '#06b6d4', orbit: 0.26, speed: -0.0009, offset: 0.8, r: 8 },
     ];
 
-    agentNames.forEach((name, i) => {
-      const angle = (i / agentNames.length) * Math.PI * 2 - Math.PI / 2;
-      const dist = 0.2 + Math.random() * 0.1;
-      particles.push({
-        x: 0.5 + Math.cos(angle) * dist,
-        y: 0.48 + Math.sin(angle) * dist,
-        vx: (Math.random() - 0.5) * 0.00012,
-        vy: (Math.random() - 0.5) * 0.00012,
-        radius: 7 + Math.random() * 5,
-        color: agentColors[i],
-        label: name,
-        type: 'agent',
-      });
-    });
+    const CX = 0.5, CY = 0.48;
 
-    // Threads (fate lines between agents, not just to registry)
-    const threads: [number, number][] = [];
-    for (let i = 1; i < particles.length; i++) threads.push([0, i]); // all to registry
-    // Some agent-to-agent threads
-    threads.push([1, 3], [2, 5], [4, 7], [6, 8], [3, 6]);
-
-    const stars = Array.from({ length: 100 }, () => ({
+    // Stars
+    const stars = Array.from({ length: 90 }, () => ({
       x: Math.random(), y: Math.random(),
-      size: Math.random() * 1.2 + 0.2,
-      alpha: Math.random() * 0.3 + 0.05,
-      speed: Math.random() * 0.015 + 0.003,
+      size: Math.random() * 1.2 + 0.3,
+      alpha: Math.random() * 0.25 + 0.05,
+      speed: Math.random() * 0.012 + 0.003,
     }));
 
-    // Data packets along threads
-    const packets: { threadIdx: number; t: number; speed: number; forward: boolean }[] = [];
-    const spawnPacket = () => {
-      const idx = Math.floor(Math.random() * threads.length);
-      packets.push({ threadIdx: idx, t: 0, speed: 0.006 + Math.random() * 0.01, forward: Math.random() > 0.3 });
-    };
+    // Collaboration events: two agents send data to center → result bursts out
+    interface CollabEvent {
+      agentA: number; agentB: number;
+      phase: number; // 0→1: converge, 1→2: burst
+      startFrame: number;
+    }
+    const collabs: CollabEvent[] = [];
+    let nextCollab = 120;
+
+    // Result bursts from collaboration
+    interface Burst {
+      x: number; y: number;
+      age: number; maxAge: number;
+      color: string;
+    }
+    const bursts: Burst[] = [];
+
+    // Ambient packets flowing between agents
+    interface Packet {
+      fromIdx: number; toIdx: number;
+      t: number; speed: number;
+    }
+    const packets: Packet[] = [];
 
     let frame = 0;
 
@@ -82,76 +84,100 @@ function HeroCanvas() {
 
       // Stars
       for (const star of stars) {
-        const a = star.alpha + Math.sin(frame * star.speed) * 0.12;
+        const a = star.alpha + Math.sin(frame * star.speed) * 0.1;
         ctx.beginPath();
         ctx.arc(star.x * W, star.y * H, star.size, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(200, 190, 220, ${a})`;
         ctx.fill();
       }
 
-      if (frame % 25 === 0) spawnPacket();
-
-      // Update particles
-      for (let i = 1; i < particles.length; i++) {
-        const p = particles[i];
-        const dx = 0.5 - p.x;
-        const dy = 0.48 - p.y;
-        p.vx += dx * 0.000006;
-        p.vy += dy * 0.000006;
-        const mx = mouseRef.current.x / W - p.x;
-        const my = mouseRef.current.y / H - p.y;
-        const md = Math.sqrt(mx * mx + my * my);
-        if (md < 0.15 && md > 0.01) {
-          p.vx -= (mx / md) * 0.00002;
-          p.vy -= (my / md) * 0.00002;
+      // Calculate agent positions (fixed orbits, no shrinking)
+      const agentPositions = agentDefs.map((a, i) => {
+        const angle = a.offset + frame * a.speed;
+        // Mouse influence: slight push away
+        const mx = mouseRef.current.x >= 0 ? mouseRef.current.x / W : -1;
+        const my = mouseRef.current.y >= 0 ? mouseRef.current.y / H : -1;
+        let px = CX + Math.cos(angle) * a.orbit;
+        let py = CY + Math.sin(angle) * a.orbit;
+        if (mx >= 0) {
+          const dx = px - mx, dy = py - my;
+          const d = Math.sqrt(dx * dx + dy * dy);
+          if (d < 0.12 && d > 0.01) {
+            px += (dx / d) * 0.008;
+            py += (dy / d) * 0.008;
+          }
         }
-        p.vx *= 0.996;
-        p.vy *= 0.996;
-        p.x += p.vx;
-        p.y += p.vy;
-        p.x = Math.max(0.08, Math.min(0.92, p.x));
-        p.y = Math.max(0.08, Math.min(0.92, p.y));
+        return { x: px, y: py, ...a, idx: i };
+      });
+
+      // Spawn ambient packets
+      if (frame % 40 === 0) {
+        const a = Math.floor(Math.random() * agentDefs.length);
+        const b = Math.floor(Math.random() * agentDefs.length);
+        if (a !== b) packets.push({ fromIdx: a, toIdx: b, t: 0, speed: 0.012 + Math.random() * 0.008 });
       }
 
-      // Draw threads (fate lines)
-      for (const [ai, bi] of threads) {
-        const a = particles[ai];
-        const b = particles[bi];
-        const ax = a.x * W, ay = a.y * H;
-        const bx = b.x * W, by = b.y * H;
+      // Spawn collaboration events periodically
+      if (frame >= nextCollab) {
+        const a = Math.floor(Math.random() * agentDefs.length);
+        let b = Math.floor(Math.random() * agentDefs.length);
+        while (b === a) b = Math.floor(Math.random() * agentDefs.length);
+        collabs.push({ agentA: a, agentB: b, phase: 0, startFrame: frame });
+        nextCollab = frame + 180 + Math.floor(Math.random() * 120);
+      }
 
-        // Thread line — golden/indigo gradient
-        const grad = ctx.createLinearGradient(ax, ay, bx, by);
-        const alpha = 0.08 + Math.sin(frame * 0.012 + ai + bi) * 0.04;
-        grad.addColorStop(0, `rgba(212, 168, 67, ${alpha})`);
-        grad.addColorStop(0.5, `rgba(91, 91, 214, ${alpha * 1.2})`);
-        grad.addColorStop(1, `rgba(212, 168, 67, ${alpha})`);
+      // Draw orbital paths (very subtle)
+      for (const a of agentDefs) {
         ctx.beginPath();
-        ctx.moveTo(ax, ay);
-        ctx.lineTo(bx, by);
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 0.8;
+        ctx.ellipse(CX * W, CY * H, a.orbit * W, a.orbit * H, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(91, 91, 214, 0.04)';
+        ctx.lineWidth = 0.5;
         ctx.stroke();
       }
 
-      // Data packets
+      // Draw connection threads between nearby agents
+      for (let i = 0; i < agentPositions.length; i++) {
+        const a = agentPositions[i];
+        for (let j = i + 1; j < agentPositions.length; j++) {
+          const b = agentPositions[j];
+          const dx = a.x - b.x, dy = a.y - b.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 0.35) {
+            const alpha = (0.35 - dist) / 0.35 * 0.1;
+            ctx.beginPath();
+            ctx.moveTo(a.x * W, a.y * H);
+            ctx.lineTo(b.x * W, b.y * H);
+            ctx.strokeStyle = `rgba(212, 168, 67, ${alpha})`;
+            ctx.lineWidth = 0.6;
+            ctx.stroke();
+          }
+        }
+        // Thread to center
+        ctx.beginPath();
+        ctx.moveTo(a.x * W, a.y * H);
+        ctx.lineTo(CX * W, CY * H);
+        const cAlpha = 0.04 + Math.sin(frame * 0.01 + i) * 0.02;
+        ctx.strokeStyle = `rgba(91, 91, 214, ${cAlpha})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+
+      // Draw ambient packets
       for (let i = packets.length - 1; i >= 0; i--) {
         const pk = packets[i];
         pk.t += pk.speed;
         if (pk.t >= 1) { packets.splice(i, 1); continue; }
-        const [ai, bi] = threads[pk.threadIdx];
-        const from = pk.forward ? particles[ai] : particles[bi];
-        const to = pk.forward ? particles[bi] : particles[ai];
+        const from = agentPositions[pk.fromIdx];
+        const to = agentPositions[pk.toIdx];
         const px = (from.x + (to.x - from.x) * pk.t) * W;
         const py = (from.y + (to.y - from.y) * pk.t) * H;
 
-        // Golden glow packet
-        const grd = ctx.createRadialGradient(px, py, 0, px, py, 10);
-        grd.addColorStop(0, 'rgba(212, 168, 67, 0.7)');
-        grd.addColorStop(0.5, 'rgba(212, 168, 67, 0.15)');
+        // Packet glow
+        const grd = ctx.createRadialGradient(px, py, 0, px, py, 8);
+        grd.addColorStop(0, 'rgba(212, 168, 67, 0.6)');
         grd.addColorStop(1, 'rgba(212, 168, 67, 0)');
         ctx.beginPath();
-        ctx.arc(px, py, 10, 0, Math.PI * 2);
+        ctx.arc(px, py, 8, 0, Math.PI * 2);
         ctx.fillStyle = grd;
         ctx.fill();
         ctx.beginPath();
@@ -160,45 +186,164 @@ function HeroCanvas() {
         ctx.fill();
       }
 
-      // Draw nodes
-      for (const p of particles) {
-        const px = p.x * W, py = p.y * H;
+      // Process collaboration events
+      for (let i = collabs.length - 1; i >= 0; i--) {
+        const ev = collabs[i];
+        const elapsed = frame - ev.startFrame;
+        const duration = 120; // frames for full event
 
-        // Outer glow
-        const glowR = p.type === 'registry' ? 50 : 22;
-        const grd = ctx.createRadialGradient(px, py, 0, px, py, glowR);
-        grd.addColorStop(0, p.color + '20');
-        grd.addColorStop(1, p.color + '00');
+        if (elapsed > duration) { collabs.splice(i, 1); continue; }
+
+        const t = elapsed / duration;
+        const a = agentPositions[ev.agentA];
+        const b = agentPositions[ev.agentB];
+
+        if (t < 0.5) {
+          // Phase 1: Two beams converge from agents toward center
+          const beamT = t / 0.5;
+          // Beam from A to center
+          const ax = (a.x + (CX - a.x) * beamT) * W;
+          const ay = (a.y + (CY - a.y) * beamT) * H;
+          const bx = (b.x + (CX - b.x) * beamT) * W;
+          const by = (b.y + (CY - b.y) * beamT) * H;
+
+          // Draw beam trails
+          ctx.beginPath();
+          ctx.moveTo(a.x * W, a.y * H);
+          ctx.lineTo(ax, ay);
+          ctx.strokeStyle = a.color + 'aa';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(b.x * W, b.y * H);
+          ctx.lineTo(bx, by);
+          ctx.strokeStyle = b.color + 'aa';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+
+          // Beam heads
+          for (const [px, py, col] of [[ax, ay, a.color], [bx, by, b.color]] as [number, number, string][]) {
+            const g = ctx.createRadialGradient(px, py, 0, px, py, 12);
+            g.addColorStop(0, col + 'dd');
+            g.addColorStop(1, col + '00');
+            ctx.beginPath();
+            ctx.arc(px, py, 12, 0, Math.PI * 2);
+            ctx.fillStyle = g;
+            ctx.fill();
+          }
+        } else {
+          // Phase 2: Burst at center → result emerges
+          const burstT = (t - 0.5) / 0.5;
+
+          if (burstT < 0.1 && bursts.length < 20) {
+            // Spawn burst particles
+            for (let p = 0; p < 6; p++) {
+              const angle = Math.random() * Math.PI * 2;
+              bursts.push({
+                x: CX * W + Math.cos(angle) * burstT * 60,
+                y: CY * H + Math.sin(angle) * burstT * 60,
+                age: 0, maxAge: 40 + Math.random() * 30,
+                color: '#d4a843',
+              });
+            }
+          }
+
+          // Central glow
+          const glowSize = 30 + burstT * 20;
+          const glowAlpha = (1 - burstT) * 0.4;
+          const g = ctx.createRadialGradient(CX * W, CY * H, 0, CX * W, CY * H, glowSize);
+          g.addColorStop(0, `rgba(212, 168, 67, ${glowAlpha})`);
+          g.addColorStop(0.5, `rgba(91, 91, 214, ${glowAlpha * 0.5})`);
+          g.addColorStop(1, 'rgba(212, 168, 67, 0)');
+          ctx.beginPath();
+          ctx.arc(CX * W, CY * H, glowSize, 0, Math.PI * 2);
+          ctx.fillStyle = g;
+          ctx.fill();
+
+          // Result label
+          if (burstT > 0.3) {
+            const labelAlpha = Math.min(1, (burstT - 0.3) / 0.3) * (1 - Math.max(0, (burstT - 0.7) / 0.3));
+            ctx.font = "600 10px 'Outfit', system-ui";
+            ctx.fillStyle = `rgba(212, 168, 67, ${labelAlpha})`;
+            ctx.textAlign = 'center';
+            ctx.fillText('✓ result', CX * W, CY * H - 25);
+          }
+        }
+      }
+
+      // Draw burst particles
+      for (let i = bursts.length - 1; i >= 0; i--) {
+        const b = bursts[i];
+        b.age++;
+        if (b.age > b.maxAge) { bursts.splice(i, 1); continue; }
+        const life = 1 - b.age / b.maxAge;
+        // Move outward
+        const angle = Math.atan2(b.y - CY * H, b.x - CX * W);
+        b.x += Math.cos(angle) * 1.5;
+        b.y += Math.sin(angle) * 1.5;
         ctx.beginPath();
-        ctx.arc(px, py, glowR, 0, Math.PI * 2);
+        ctx.arc(b.x, b.y, 2 * life, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(212, 168, 67, ${life * 0.6})`;
+        ctx.fill();
+      }
+
+      // Draw center node (WYRD)
+      const cx = CX * W, cy = CY * H;
+      const centerGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 40);
+      centerGlow.addColorStop(0, 'rgba(91, 91, 214, 0.12)');
+      centerGlow.addColorStop(1, 'rgba(91, 91, 214, 0)');
+      ctx.beginPath();
+      ctx.arc(cx, cy, 40, 0, Math.PI * 2);
+      ctx.fillStyle = centerGlow;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 16, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(91, 91, 214, 0.12)';
+      ctx.strokeStyle = 'rgba(91, 91, 214, 0.5)';
+      ctx.lineWidth = 1.5;
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.font = "600 11px 'Cinzel', serif";
+      ctx.fillStyle = '#d4a843';
+      ctx.textAlign = 'center';
+      ctx.fillText('WYRD', cx, cy + 28);
+
+      // Draw agent nodes
+      for (const a of agentPositions) {
+        const ax = a.x * W, ay = a.y * H;
+
+        // Glow
+        const grd = ctx.createRadialGradient(ax, ay, 0, ax, ay, 20);
+        grd.addColorStop(0, a.color + '18');
+        grd.addColorStop(1, a.color + '00');
+        ctx.beginPath();
+        ctx.arc(ax, ay, 20, 0, Math.PI * 2);
         ctx.fillStyle = grd;
         ctx.fill();
 
         // Ring
         ctx.beginPath();
-        ctx.arc(px, py, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = p.color + '15';
-        ctx.strokeStyle = p.color + (p.type === 'registry' ? 'bb' : '77');
-        ctx.lineWidth = p.type === 'registry' ? 2 : 1.2;
+        ctx.arc(ax, ay, a.r, 0, Math.PI * 2);
+        ctx.fillStyle = a.color + '15';
+        ctx.strokeStyle = a.color + '77';
+        ctx.lineWidth = 1.2;
         ctx.fill();
         ctx.stroke();
 
-        // Inner core
+        // Core
         ctx.beginPath();
-        ctx.arc(px, py, p.type === 'registry' ? 6 : 3, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
+        ctx.arc(ax, ay, 3, 0, Math.PI * 2);
+        ctx.fillStyle = a.color;
         ctx.fill();
 
         // Label
-        if (p.type === 'registry') {
-          ctx.font = "600 12px 'Cinzel', serif";
-          ctx.fillStyle = '#d4a843';
-        } else {
-          ctx.font = "400 9px 'Outfit', system-ui";
-          ctx.fillStyle = 'rgba(237,237,239,0.5)';
-        }
+        ctx.font = "400 9px 'Outfit', system-ui";
+        ctx.fillStyle = 'rgba(237,237,239,0.45)';
         ctx.textAlign = 'center';
-        ctx.fillText(p.label, px, py + p.radius + 15);
+        ctx.fillText(a.name, ax, ay + a.r + 14);
       }
 
       animId = requestAnimationFrame(draw);
@@ -210,12 +355,15 @@ function HeroCanvas() {
       const rect = canvas.getBoundingClientRect();
       mouseRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
     };
+    const onLeave = () => { mouseRef.current = { x: -1, y: -1 }; };
     canvas.addEventListener('mousemove', onMouse);
+    canvas.addEventListener('mouseleave', onLeave);
 
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', resize);
       canvas.removeEventListener('mousemove', onMouse);
+      canvas.removeEventListener('mouseleave', onLeave);
     };
   }, []);
 

@@ -35,11 +35,11 @@ Phase 3 (später):  Enterprise Trust/Policy Layer → Revenue → Acquisition
 - [ ] README im generierten Projekt
 
 ### 4. Brand & Design Assets
-- [ ] Logo (mehr als nur "AN" im Quadrat)
-- [ ] Hero-Banner für GitHub README
-- [ ] Animiertes GIF der Demo für README
+- [x] WYRD Logo (W-Mark mit verwobenen Fäden)
+- [x] Landing Page mit animiertem Network Graph
+- [ ] Animiertes GIF der Terminal-Demo für README
 - [ ] Architecture-Diagram als SVG
-- [ ] Farbpalette & Typography Guidelines
+- [x] Farbpalette (Void/Fate Indigo/Thread Gold/Rune Cyan) & Typography (Cinzel/Outfit/JetBrains Mono)
 
 ---
 
