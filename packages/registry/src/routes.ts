@@ -115,6 +115,77 @@ export function createRoutes(db: Db) {
     });
   });
 
+  // A2A Agent Card (https://a2a-protocol.org — compatible agent discovery)
+  app.get('/v1/agents/:id/agent-card', (c) => {
+    const id = c.req.param('id');
+    const agent = db.select().from(agents).where(eq(agents.id, id)).get();
+    if (!agent) return c.json({ error: 'Agent not found' }, 404);
+
+    const caps = db.select().from(capabilities).where(eq(capabilities.agentId, id)).all();
+    const meta = agent.metaJson ? JSON.parse(agent.metaJson) : {};
+
+    // A2A Agent Card format
+    const agentCard = {
+      name: agent.name ?? id,
+      description: agent.description ?? meta.description ?? '',
+      url: agent.endpoint,
+      provider: {
+        organization: meta.owner ?? 'WYRD Network',
+        url: 'https://github.com/Fliegenbart/AgentNet',
+      },
+      version: meta.version ?? '0.1.0',
+      capabilities: {
+        streaming: true,
+        pushNotifications: false,
+      },
+      skills: caps.map((cap) => ({
+        id: cap.capabilityId,
+        name: cap.name,
+        description: cap.description,
+        tags: cap.tagsJson ? JSON.parse(cap.tagsJson) : [],
+        inputSchema: cap.inputSchemaJson ? JSON.parse(cap.inputSchemaJson) : undefined,
+        outputSchema: cap.outputSchemaJson ? JSON.parse(cap.outputSchemaJson) : undefined,
+      })),
+      // WYRD extensions
+      extensions: {
+        wyrd: {
+          agentId: id,
+          reputation: (() => {
+            const rep = db.select().from(reputationScores).where(eq(reputationScores.agentId, id)).get();
+            return rep ? { overall: rep.overallScore, totalTasks: rep.totalTasks } : { overall: 50, totalTasks: 0 };
+          })(),
+          protocol: 'wyrd/v1',
+        },
+      },
+    };
+
+    return c.json(agentCard);
+  });
+
+  // Well-known agent card endpoint (A2A standard)
+  app.get('/.well-known/agent-card.json', (c) => {
+    // Return registry's own agent card
+    return c.json({
+      name: 'WYRD Registry',
+      description: 'Discovery registry for the WYRD agent network',
+      url: c.req.url.replace('/.well-known/agent-card.json', ''),
+      provider: {
+        organization: 'WYRD',
+        url: 'https://github.com/Fliegenbart/AgentNet',
+      },
+      version: '0.1.0',
+      capabilities: {
+        streaming: false,
+        pushNotifications: false,
+      },
+      skills: [
+        { id: 'discover', name: 'Agent Discovery', description: 'Find agents by capability, tags, or reputation', tags: ['discovery', 'registry'] },
+        { id: 'register', name: 'Agent Registration', description: 'Register an agent and its capabilities', tags: ['registration', 'registry'] },
+        { id: 'reputation', name: 'Reputation Query', description: 'Query agent reputation scores', tags: ['trust', 'reputation'] },
+      ],
+    });
+  });
+
   // Delete agent
   app.delete('/v1/agents/:id', (c) => {
     const id = c.req.param('id');
