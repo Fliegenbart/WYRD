@@ -51,7 +51,7 @@ const searchFlights = defineCapability({
 });
 
 const port = Number(process.env['PORT'] ?? 4213);
-const registryUrl = process.env['AGENTNET_REGISTRY_URL'] ?? 'http://localhost:4200';
+const registryUrl = process.env['WYRD_REGISTRY_URL'] ?? 'http://localhost:4200';
 
 const agent = new Agent({ name: 'FlightFinder', description: 'Finds the best flight deals', capabilities: [searchFlights], registry: registryUrl, port });
 agent.on('started', ({ id }) => { console.log(`✈️  FlightFinder online\n   ID: ${id}\n   Port: ${port}`); });

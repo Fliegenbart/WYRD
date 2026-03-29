@@ -1,7 +1,7 @@
 import { Agent, AgentClient, defineCapability } from '@wyrd/sdk';
 import { z } from 'zod';
 
-const registryUrl = process.env['AGENTNET_REGISTRY_URL'] ?? 'http://localhost:4200';
+const registryUrl = process.env['WYRD_REGISTRY_URL'] ?? 'http://localhost:4200';
 const port = Number(process.env['PORT'] ?? 4210);
 
 // The orchestrator client — discovers and delegates to other agents

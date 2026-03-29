@@ -13,7 +13,7 @@ export default async function HomePage() {
   try {
     [agents, stats] = await Promise.all([fetchAgents(), fetchStats()]);
   } catch (e) {
-    error = 'Cannot connect to registry. Make sure the AgentNet registry is running on port 4200.';
+    error = 'Cannot connect to registry. Make sure the WYRD registry is running on port 4200.';
   }
 
   if (error) {
@@ -36,7 +36,7 @@ export default async function HomePage() {
       <div>
         <h1 className="text-2xl font-bold text-white">Network Overview</h1>
         <p className="mt-1 text-sm text-[var(--text-dim)]">
-          Real-time view of the AgentNet agent network
+          Real-time view of the WYRD agent network
         </p>
       </div>
 

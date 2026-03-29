@@ -62,7 +62,7 @@ const translateText = defineCapability({
   },
 });
 
-const registryUrl = process.env['AGENTNET_REGISTRY_URL'] ?? 'http://localhost:4200';
+const registryUrl = process.env['WYRD_REGISTRY_URL'] ?? 'http://localhost:4200';
 const port = Number(process.env['PORT'] ?? 4212);
 
 const agent = new Agent({

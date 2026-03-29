@@ -24,7 +24,7 @@ async function main() {
 
   if (!name || name === '--help' || name === '-h') {
     log(`
-${COLORS.bold}${COLORS.cyan}create-wyrd${COLORS.reset} — scaffold a new AgentNet agent
+${COLORS.bold}${COLORS.cyan}create-wyrd${COLORS.reset} — scaffold a new WYRD agent
 
 ${COLORS.bold}Usage:${COLORS.reset}
   npx create-wyrd <agent-name>
@@ -117,7 +117,7 @@ ${COLORS.bold}Options:${COLORS.reset}
   // Write .env
   writeFileSync(
     join(dir, '.env'),
-    `AGENTNET_PRIVATE_KEY=${identity.exportPrivateKey()}\nAGENTNET_REGISTRY_URL=${registryUrl}\nPORT=${port}\n`,
+    `WYRD_PRIVATE_KEY=${identity.exportPrivateKey()}\nWYRD_REGISTRY_URL=${registryUrl}\nPORT=${port}\n`,
   );
   success('Created .env with agent identity');
 
@@ -146,7 +146,7 @@ export const hello = defineCapability({
   handler: async (input, ctx) => {
     ctx.progress(50, \`Preparing greeting for \${input.name}...\`);
     return {
-      greeting: \`Hello, \${input.name}! Welcome to AgentNet.\`,
+      greeting: \`Hello, \${input.name}! Welcome to WYRD.\`,
       timestamp: new Date().toISOString(),
     };
   },
@@ -165,9 +165,9 @@ const agent = new Agent({
   name: '${name}',
   description: 'My WYRD agent',
   capabilities: [hello],
-  registry: process.env['AGENTNET_REGISTRY_URL'] ?? '${registryUrl}',
+  registry: process.env['WYRD_REGISTRY_URL'] ?? '${registryUrl}',
   port: Number(process.env['PORT'] ?? ${port}),
-  privateKey: process.env['AGENTNET_PRIVATE_KEY'],
+  privateKey: process.env['WYRD_PRIVATE_KEY'],
 });
 
 agent.on('started', ({ id }) => {

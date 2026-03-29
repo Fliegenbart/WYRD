@@ -372,7 +372,7 @@ export default function LandingPage() {
           <a href="#agents" className="text-sm text-[var(--stone)] hover:text-[var(--ash)] transition-colors" style={{ fontFamily: "'Outfit', sans-serif" }}>Agents</a>
           <a href="/dashboard" className="text-sm text-[var(--stone)] hover:text-[var(--ash)] transition-colors" style={{ fontFamily: "'Outfit', sans-serif" }}>Dashboard</a>
           <a
-            href="https://github.com/Fliegenbart/AgentNet"
+            href="https://github.com/Fliegenbart/wyrd"
             target="_blank"
             className="flex items-center gap-2 rounded-lg border border-[var(--border-light)] bg-[var(--void-light)] px-4 py-2 text-sm text-[var(--ash)] hover:border-[var(--thread)]/40 hover:text-[var(--thread)] transition-all"
             style={{ fontFamily: "'Outfit', sans-serif" }}
@@ -410,7 +410,7 @@ export default function LandingPage() {
 
             <div className="mt-10 flex items-center gap-4">
               <a
-                href="https://github.com/Fliegenbart/AgentNet"
+                href="https://github.com/Fliegenbart/wyrd"
                 target="_blank"
                 className="rounded-xl px-7 py-3.5 text-sm font-medium text-[var(--void)] transition-all hover:shadow-lg"
                 style={{ fontFamily: "'Outfit', sans-serif", background: 'linear-gradient(135deg, var(--thread), var(--thread-light))', boxShadow: '0 4px 24px var(--thread-glow)' }}
@@ -567,7 +567,7 @@ export default function LandingPage() {
             </p>
             <div className="mt-12 flex items-center justify-center gap-5">
               <a
-                href="https://github.com/Fliegenbart/AgentNet"
+                href="https://github.com/Fliegenbart/wyrd"
                 target="_blank"
                 className="group rounded-xl px-8 py-4 text-base font-medium text-[var(--void)] transition-all hover:shadow-lg"
                 style={{ fontFamily: "'Outfit', sans-serif", background: 'linear-gradient(135deg, var(--thread), var(--thread-light))', boxShadow: '0 4px 30px var(--thread-glow)' }}
@@ -597,9 +597,9 @@ export default function LandingPage() {
             <span className="text-sm" style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--stone)' }}>The open coordination layer for the agent internet.</span>
           </div>
           <div className="flex items-center gap-6 text-sm" style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--stone)' }}>
-            <a href="https://github.com/Fliegenbart/AgentNet" target="_blank" className="hover:text-[var(--ash)] transition-colors">GitHub</a>
-            <a href="https://github.com/Fliegenbart/AgentNet/blob/main/docs/ROADMAP.md" target="_blank" className="hover:text-[var(--ash)] transition-colors">Roadmap</a>
-            <a href="https://github.com/Fliegenbart/AgentNet/blob/main/CONTRIBUTING.md" target="_blank" className="hover:text-[var(--ash)] transition-colors">Contributing</a>
+            <a href="https://github.com/Fliegenbart/wyrd" target="_blank" className="hover:text-[var(--ash)] transition-colors">GitHub</a>
+            <a href="https://github.com/Fliegenbart/wyrd/blob/main/docs/ROADMAP.md" target="_blank" className="hover:text-[var(--ash)] transition-colors">Roadmap</a>
+            <a href="https://github.com/Fliegenbart/wyrd/blob/main/CONTRIBUTING.md" target="_blank" className="hover:text-[var(--ash)] transition-colors">Contributing</a>
             <span>MIT</span>
           </div>
         </div>

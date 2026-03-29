@@ -27,7 +27,7 @@ services:
       context: .
       dockerfile: agents/weather/Dockerfile
     environment:
-      AGENTNET_REGISTRY_URL: 'http://registry:4200'
+      WYRD_REGISTRY_URL: 'http://registry:4200'
       PORT: '4211'
     depends_on:
       - registry
@@ -37,7 +37,7 @@ services:
       context: .
       dockerfile: agents/translator/Dockerfile
     environment:
-      AGENTNET_REGISTRY_URL: 'http://registry:4200'
+      WYRD_REGISTRY_URL: 'http://registry:4200'
       PORT: '4212'
     depends_on:
       - registry
@@ -47,7 +47,7 @@ services:
       context: .
       dockerfile: agents/orchestrator/Dockerfile
     environment:
-      AGENTNET_REGISTRY_URL: 'http://registry:4200'
+      WYRD_REGISTRY_URL: 'http://registry:4200'
       PORT: '4210'
     depends_on:
       - registry

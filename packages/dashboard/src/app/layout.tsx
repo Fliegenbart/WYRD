@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'AgentNet — The open protocol for agent-to-agent communication',
+  title: 'WYRD — The open coordination layer for the agent internet',
   description: 'Deploy agents. Discover agents. Let them work together. The open protocol for the agent internet.',
 };
 

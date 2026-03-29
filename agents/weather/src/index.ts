@@ -114,7 +114,7 @@ function degreeToDirection(deg: number): string {
   return dirs[Math.round(deg / 45) % 8];
 }
 
-const registryUrl = process.env['AGENTNET_REGISTRY_URL'] ?? 'http://localhost:4200';
+const registryUrl = process.env['WYRD_REGISTRY_URL'] ?? 'http://localhost:4200';
 const port = Number(process.env['PORT'] ?? 4211);
 
 const agent = new Agent({

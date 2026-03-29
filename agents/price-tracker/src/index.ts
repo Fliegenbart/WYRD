@@ -59,7 +59,7 @@ const trackPrice = defineCapability({
 });
 
 const port = Number(process.env['PORT'] ?? 4216);
-const registryUrl = process.env['AGENTNET_REGISTRY_URL'] ?? 'http://localhost:4200';
+const registryUrl = process.env['WYRD_REGISTRY_URL'] ?? 'http://localhost:4200';
 const agent = new Agent({ name: 'PriceTracker', description: 'Compares prices across major retailers', capabilities: [trackPrice], registry: registryUrl, port });
 agent.on('started', ({ id }) => { console.log(`💰 PriceTracker online\n   ID: ${id}\n   Port: ${port}`); });
 agent.on('task:start', ({ taskId }) => { console.log(`   📋 Task ${taskId.slice(0, 8)}... → track-price`); });

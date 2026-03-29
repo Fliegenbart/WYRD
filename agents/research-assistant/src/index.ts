@@ -98,7 +98,7 @@ const researchTopic = defineCapability({
 });
 
 const port = Number(process.env['PORT'] ?? 4215);
-const registryUrl = process.env['AGENTNET_REGISTRY_URL'] ?? 'http://localhost:4200';
+const registryUrl = process.env['WYRD_REGISTRY_URL'] ?? 'http://localhost:4200';
 const agent = new Agent({ name: 'ResearchAssistant', description: 'Deep research on any topic', capabilities: [researchTopic], registry: registryUrl, port });
 agent.on('started', ({ id }) => { console.log(`🔬 ResearchAssistant online\n   ID: ${id}\n   Port: ${port}`); });
 agent.on('task:start', ({ taskId }) => { console.log(`   📋 Task ${taskId.slice(0, 8)}... → research-topic`); });

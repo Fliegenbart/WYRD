@@ -24,7 +24,7 @@ describe('Identity', () => {
 
   it('signs and verifies data', async () => {
     const identity = await generateIdentity();
-    const data = new TextEncoder().encode('hello agentnet');
+    const data = new TextEncoder().encode('hello wyrd');
     const signature = await identity.sign(data);
     const valid = await verifySignature(identity.id, data, signature);
     expect(valid).toBe(true);
@@ -32,7 +32,7 @@ describe('Identity', () => {
 
   it('rejects tampered data', async () => {
     const identity = await generateIdentity();
-    const data = new TextEncoder().encode('hello agentnet');
+    const data = new TextEncoder().encode('hello wyrd');
     const signature = await identity.sign(data);
     const tampered = new TextEncoder().encode('hello hacker');
     const valid = await verifySignature(identity.id, tampered, signature);

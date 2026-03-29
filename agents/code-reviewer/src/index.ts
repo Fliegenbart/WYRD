@@ -76,7 +76,7 @@ const reviewCode = defineCapability({
 });
 
 const port = Number(process.env['PORT'] ?? 4214);
-const registryUrl = process.env['AGENTNET_REGISTRY_URL'] ?? 'http://localhost:4200';
+const registryUrl = process.env['WYRD_REGISTRY_URL'] ?? 'http://localhost:4200';
 const agent = new Agent({ name: 'CodeReviewer', description: 'Reviews code for bugs, style, and security', capabilities: [reviewCode], registry: registryUrl, port });
 agent.on('started', ({ id }) => { console.log(`🔍 CodeReviewer online\n   ID: ${id}\n   Port: ${port}`); });
 agent.on('task:start', ({ taskId }) => { console.log(`   📋 Task ${taskId.slice(0, 8)}... → review-code`); });

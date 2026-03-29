@@ -26,13 +26,13 @@ export async function loadIdentity(privateKeyHex: string): Promise<AgentIdentity
   return createIdentity(privateKey, publicKey);
 }
 
-/** Load identity from AGENTNET_PRIVATE_KEY environment variable */
+/** Load identity from WYRD_PRIVATE_KEY environment variable */
 export async function loadIdentityFromEnv(): Promise<AgentIdentity> {
-  const key = process.env['AGENTNET_PRIVATE_KEY'];
+  const key = process.env['WYRD_PRIVATE_KEY'];
   if (!key) {
     throw new Error(
-      'AGENTNET_PRIVATE_KEY environment variable not set. ' +
-        'Generate one with: npx create-agentnet',
+      'WYRD_PRIVATE_KEY environment variable not set. ' +
+        'Generate one with: npx create-wyrd',
     );
   }
   return loadIdentity(key);

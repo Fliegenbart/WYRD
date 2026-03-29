@@ -131,7 +131,7 @@ export function createRoutes(db: Db) {
       url: agent.endpoint,
       provider: {
         organization: meta.owner ?? 'WYRD Network',
-        url: 'https://github.com/Fliegenbart/AgentNet',
+        url: 'https://github.com/Fliegenbart/wyrd',
       },
       version: meta.version ?? '0.1.0',
       capabilities: {
@@ -171,7 +171,7 @@ export function createRoutes(db: Db) {
       url: c.req.url.replace('/.well-known/agent-card.json', ''),
       provider: {
         organization: 'WYRD',
-        url: 'https://github.com/Fliegenbart/AgentNet',
+        url: 'https://github.com/Fliegenbart/wyrd',
       },
       version: '0.1.0',
       capabilities: {

@@ -38,8 +38,8 @@ Named after the Old Norse concept of **wyrd** — the interconnected web of fate
 **Run the full demo (8 agents with real APIs):**
 
 ```bash
-git clone https://github.com/Fliegenbart/AgentNet.git
-cd AgentNet
+git clone https://github.com/Fliegenbart/wyrd.git
+cd wyrd
 pnpm install
 pnpm build
 pnpm --filter @wyrd/demo run start
