@@ -29,6 +29,7 @@ export default function RootLayout({
               <NavLink href="/" label="Overview" />
               <NavLink href="/agents" label="Agents" />
               <NavLink href="/network" label="Network" />
+              <NavLink href="/playground" label="Playground" />
             </div>
           </div>
         </nav>

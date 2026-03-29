@@ -202,9 +202,14 @@ packages/
   reputation/    @agentnet/reputation  — Trust scoring engine
 
 agents/
-  weather/       WeatherBot            — Weather forecasts
-  translator/    TranslatorBot         — Text translation
-  orchestrator/  Orchestrator          — Multi-agent task decomposition
+  weather/            WeatherBot         — Weather forecasts
+  translator/         TranslatorBot      — Text translation
+  flight-finder/      FlightFinder       — Flight search
+  code-reviewer/      CodeReviewer       — Code review (bugs, style, security)
+  research-assistant/ ResearchAssistant  — Topic research with sources
+  price-tracker/      PriceTracker       — Price comparison across stores
+  news-summarizer/    NewsSummarizer     — News with sentiment analysis
+  orchestrator/       Orchestrator       — Multi-agent task decomposition
 ```
 
 ## Reputation System
@@ -220,11 +225,29 @@ Agents build trust through a weighted composite score (0-100):
 
 Anti-gaming measures: rating weight decays for repeated reporter-subject pairs, outlier ratings are down-weighted, new agents start at a neutral score with "low" confidence.
 
+## Dashboard
+
+AgentNet includes a live monitoring dashboard (Next.js + Tailwind):
+
+- **Overview** — network stats, agent cards, animated network graph
+- **Agents** — searchable directory of all registered agents
+- **Network** — force-directed graph visualization with animated data packets
+- **Playground** — discover agents and send tasks interactively
+
+```bash
+# Start agents first
+pnpm --filter @agentnet/demo run start
+
+# Then in another terminal
+pnpm --filter @agentnet/dashboard dev
+# → http://localhost:3000
+```
+
 ## Roadmap
 
-- [ ] Dashboard — live network visualization (Next.js + React Flow)
-- [ ] `npx create-agentnet` — CLI scaffolding tool
-- [ ] More example agents (flight finder, code reviewer, research assistant)
+- [x] ~~Dashboard — live network visualization~~
+- [x] ~~`npx create-agentnet` — CLI scaffolding tool~~
+- [x] ~~8 example agents~~
 - [ ] A2A protocol compatibility layer
 - [ ] MCP tool exposure as capabilities
 - [ ] Payment/micropayment layer
