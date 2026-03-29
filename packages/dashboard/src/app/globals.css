@@ -1,40 +1,91 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  --bg: #0a0a0f;
-  --bg-card: #12121a;
-  --bg-card-hover: #1a1a2e;
-  --border: #1e1e30;
-  --text: #e4e4e7;
-  --text-dim: #71717a;
-  --accent: #6366f1;
-  --accent-glow: rgba(99, 102, 241, 0.15);
-  --green: #22c55e;
-  --yellow: #eab308;
-  --red: #ef4444;
+  /* WYRD Brand Palette */
+  --void: #07070a;
+  --void-light: #0e0e14;
+  --void-card: #12121c;
+  --void-card-hover: #1a1a28;
+
+  --fate: #5b5bd6;
+  --fate-light: #7b7bea;
+  --fate-glow: rgba(91, 91, 214, 0.15);
+
+  --thread: #d4a843;
+  --thread-light: #e8c56a;
+  --thread-glow: rgba(212, 168, 67, 0.15);
+
+  --rune: #00d4aa;
+  --rune-glow: rgba(0, 212, 170, 0.12);
+
+  --norn-red: #e5484d;
+
+  --ash: #ededef;
+  --stone: #63636e;
+  --stone-light: #8e8e9a;
+
+  --border: #1e1e2e;
+  --border-light: #2a2a3e;
+
+  /* Legacy aliases for dashboard components */
+  --bg: var(--void);
+  --bg-card: var(--void-card);
+  --bg-card-hover: var(--void-card-hover);
+  --text: var(--ash);
+  --text-dim: var(--stone);
+  --accent: var(--fate);
+  --green: var(--rune);
+  --yellow: var(--thread);
+  --red: var(--norn-red);
   --cyan: #06b6d4;
 }
 
 body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--void);
+  color: var(--ash);
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
+h1, h2, h3, .font-display {
+  font-family: 'Cinzel', Georgia, serif;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+::selection {
+  background: var(--fate);
+  color: white;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--void); }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--stone); }
+
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 8px var(--accent-glow); }
-  50% { box-shadow: 0 0 20px var(--accent-glow); }
+  0%, 100% { box-shadow: 0 0 8px var(--fate-glow); }
+  50% { box-shadow: 0 0 24px var(--fate-glow); }
+}
+
+@keyframes thread-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
 }
 
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-slide-up {
-  animation: slide-up 0.3s ease-out;
+  animation: slide-up 0.4s ease-out;
 }
 
-.glow {
-  animation: pulse-glow 2s ease-in-out infinite;
+.glow-fate {
+  animation: pulse-glow 2.5s ease-in-out infinite;
 }
