@@ -21,6 +21,8 @@
     "@wyrd/protocol": "workspace:*",
     "@wyrd/identity": "workspace:*",
     "@wyrd/transport": "workspace:*",
+    "hono": "^4.7.0",
+    "@hono/node-server": "^1.14.0",
     "zod": "^3.24.0",
     "zod-to-json-schema": "^3.24.0",
     "ulid": "^2.3.0"

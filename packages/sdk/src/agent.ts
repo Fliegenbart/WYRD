@@ -1,13 +1,14 @@
 import { EventEmitter } from 'node:events';
 import { ulid } from 'ulid';
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { serve } from '@hono/node-server';
 import type {
   MessageEnvelope,
   TaskRequestBody,
-  TaskProgressBody,
-  TaskResultBody,
   TaskCancelBody,
 } from '@wyrd/protocol';
-import { PROTOCOL_VERSION, REGISTRY_TARGET } from '@wyrd/protocol';
+import { PROTOCOL_VERSION } from '@wyrd/protocol';
 import {
   generateIdentity,
   loadIdentity,
@@ -27,6 +28,8 @@ export class Agent extends EventEmitter {
   private activeTasks = new Map<string, AbortController>();
   private started = false;
   private registryInterval?: ReturnType<typeof setInterval>;
+  private httpServer?: ReturnType<typeof serve>;
+  private _httpPort = 0;
 
   constructor(config: AgentConfig) {
     super();
@@ -43,7 +46,7 @@ export class Agent extends EventEmitter {
     return this.identity?.id ?? '';
   }
 
-  /** Start the agent: generate/load identity, listen for connections, announce to registry */
+  /** Start the agent: identity, HTTP server (with /.well-known/wyrd.json), WebSocket, registry */
   async start(): Promise<void> {
     if (this.started) return;
 
@@ -56,9 +59,13 @@ export class Agent extends EventEmitter {
       this.identity = await generateIdentity();
     }
 
-    // Listen for incoming WebSocket connections
-    const port = this.config.port ?? 0;
-    await this.transport.listen(port);
+    // Start HTTP server (serves /.well-known/wyrd.json + task API)
+    const wsPort = this.config.port ?? 0;
+    await this.startHttpServer(wsPort);
+
+    // Listen for incoming WebSocket connections on wsPort + 1 (or same port range)
+    const actualWsPort = this._httpPort + 1;
+    await this.transport.listen(actualWsPort);
 
     // Handle incoming messages
     this.transport.onMessage((msg) => this.handleMessage(msg));
@@ -66,7 +73,6 @@ export class Agent extends EventEmitter {
     // Announce to registry if configured
     if (this.config.registry) {
       await this.announce();
-      // Re-announce every 5 minutes
       this.registryInterval = setInterval(() => this.announce().catch(() => {}), 5 * 60 * 1000);
     }
 
@@ -80,42 +86,179 @@ export class Agent extends EventEmitter {
 
     if (this.registryInterval) clearInterval(this.registryInterval);
 
-    // Cancel all active tasks
     for (const [, controller] of this.activeTasks) {
       controller.abort();
     }
     this.activeTasks.clear();
 
     await this.transport.close();
+    if (this.httpServer) this.httpServer.close();
     this.started = false;
     this.emit('stopped');
   }
 
-  /** Get the port the agent is listening on */
+  /** HTTP port the agent is listening on */
   get port(): number {
-    return (this.transport as any).server?.address()?.port ?? 0;
+    return this._httpPort;
   }
 
-  /** Get the agent's WebSocket endpoint URL */
-  get endpoint(): string {
-    return `ws://localhost:${this.port}`;
+  /** WebSocket port */
+  get wsPort(): number {
+    return this._httpPort + 1;
   }
+
+  /** The agent's HTTP base URL */
+  get url(): string {
+    return `http://localhost:${this._httpPort}`;
+  }
+
+  /** The agent's WebSocket endpoint URL */
+  get endpoint(): string {
+    return `ws://localhost:${this.wsPort}`;
+  }
+
+  /** Generate the WYRD card (/.well-known/wyrd.json) */
+  getWyrdCard(): object {
+    const wireCapabilities = Array.from(this.capabilities.values()).map(toWireCapability);
+    return {
+      // WYRD standard fields
+      wyrd: '1.0',
+      id: this.identity.id,
+      name: this.config.name,
+      description: this.config.description ?? '',
+      url: this.url,
+      endpoint: this.endpoint,
+      publicKey: this.identity.id, // base58-encoded Ed25519 public key
+
+      capabilities: wireCapabilities,
+
+      // A2A-compatible fields
+      provider: {
+        organization: 'WYRD Agent',
+        url: this.url,
+      },
+      version: '0.1.0',
+      skills: wireCapabilities.map((cap) => ({
+        id: cap.id,
+        name: cap.name,
+        description: cap.description,
+        tags: cap.tags,
+        inputSchema: cap.inputSchema,
+        outputSchema: cap.outputSchema,
+      })),
+
+      // Connection info
+      transport: {
+        websocket: this.endpoint,
+        http: `${this.url}/v1/task`,
+      },
+    };
+  }
+
+  // ── HTTP Server ──────────────────────────────────────────────────────────
+
+  private async startHttpServer(basePort: number): Promise<void> {
+    const app = new Hono();
+    app.use('*', cors());
+
+    // /.well-known/wyrd.json — the agent's identity card
+    app.get('/.well-known/wyrd.json', (c) => {
+      return c.json(this.getWyrdCard());
+    });
+
+    // Health check
+    app.get('/health', (c) => c.json({ status: 'ok', agent: this.config.name, id: this.identity.id }));
+
+    // HTTP Task endpoint — allows direct task submission without WebSocket
+    app.post('/v1/task', async (c) => {
+      const body = await c.req.json();
+      const { capabilityId, input, taskId: providedTaskId } = body;
+
+      const capability = this.capabilities.get(capabilityId);
+      if (!capability) {
+        return c.json({ error: 'Unknown capability', capabilityId }, 404);
+      }
+
+      const inputResult = capability.input.safeParse(input);
+      if (!inputResult.success) {
+        return c.json({ error: 'Invalid input', details: inputResult.error.message }, 400);
+      }
+
+      const taskId = providedTaskId ?? ulid();
+      const controller = new AbortController();
+      this.activeTasks.set(taskId, controller);
+
+      const progressUpdates: Array<{ percent: number; status: string }> = [];
+
+      const log: TaskLogger = {
+        info: (message, ...args) => this.emit('log', 'info', taskId, message, ...args),
+        warn: (message, ...args) => this.emit('log', 'warn', taskId, message, ...args),
+        error: (message, ...args) => this.emit('log', 'error', taskId, message, ...args),
+        debug: (message, ...args) => this.emit('log', 'debug', taskId, message, ...args),
+      };
+
+      const ctx: TaskContext = {
+        taskId,
+        requesterId: body.agentId ?? 'http-client',
+        capabilityId,
+        progress: (percent, status) => { progressUpdates.push({ percent, status }); },
+        delegate: async () => { throw new Error('Delegation not yet implemented'); },
+        signal: controller.signal,
+        log,
+      };
+
+      const startTime = Date.now();
+      try {
+        this.emit('task:start', { taskId, capabilityId });
+        const output = await capability.handler(inputResult.data, ctx);
+        const durationMs = Date.now() - startTime;
+        this.emit('task:complete', { taskId, output, durationMs });
+
+        return c.json({
+          taskId,
+          status: 'success',
+          output,
+          metrics: { durationMs },
+          progress: progressUpdates,
+          agent: { id: this.identity.id, name: this.config.name },
+        });
+      } catch (err) {
+        const durationMs = Date.now() - startTime;
+        const error = err instanceof Error ? err : new Error(String(err));
+        this.emit('task:error', { taskId, error });
+
+        return c.json({
+          taskId,
+          status: 'error',
+          error: { code: 'HANDLER_ERROR', message: error.message },
+          metrics: { durationMs },
+        }, 500);
+      } finally {
+        this.activeTasks.delete(taskId);
+      }
+    });
+
+    // List capabilities
+    app.get('/v1/capabilities', (c) => {
+      return c.json({
+        capabilities: Array.from(this.capabilities.values()).map(toWireCapability),
+      });
+    });
+
+    return new Promise<void>((resolve) => {
+      this.httpServer = serve({ fetch: app.fetch, port: basePort }, (info) => {
+        this._httpPort = info.port;
+        resolve();
+      });
+    });
+  }
+
+  // ── Registry Announcement ────────────────────────────────────────────────
 
   private async announce(): Promise<void> {
     if (!this.config.registry) return;
 
     const wireCapabilities = Array.from(this.capabilities.values()).map(toWireCapability);
-
-    const body = {
-      type: 'announce' as const,
-      capabilities: wireCapabilities,
-      endpoint: this.endpoint,
-      meta: {
-        name: this.config.name,
-        description: this.config.description,
-      },
-      ttl: 3600,
-    };
 
     try {
       const response = await fetch(`${this.config.registry}/v1/agents`, {
@@ -127,7 +270,15 @@ export class Agent extends EventEmitter {
         },
         body: JSON.stringify({
           agentId: this.identity.id,
-          ...body,
+          type: 'announce',
+          capabilities: wireCapabilities,
+          endpoint: this.endpoint,
+          meta: {
+            name: this.config.name,
+            description: this.config.description,
+            url: this.url,
+          },
+          ttl: 3600,
         }),
       });
 
@@ -141,8 +292,9 @@ export class Agent extends EventEmitter {
     }
   }
 
+  // ── WebSocket Message Handling ───────────────────────────────────────────
+
   private async handleMessage(msg: MessageEnvelope): Promise<void> {
-    // Verify signature
     const valid = await verifyMessage(msg);
     if (!valid) {
       this.emit('error', new Error(`Invalid signature from ${msg.from}`));
@@ -170,17 +322,14 @@ export class Agent extends EventEmitter {
       return;
     }
 
-    // Validate input
     const inputResult = capability.input.safeParse(body.input);
     if (!inputResult.success) {
       await this.sendReject(msg.from, body.taskId, 'other', `Invalid input: ${inputResult.error.message}`);
       return;
     }
 
-    // Accept the task
     await this.sendAccept(msg.from, body.taskId);
 
-    // Set up task context
     const controller = new AbortController();
     this.activeTasks.set(body.taskId, controller);
 
@@ -198,39 +347,24 @@ export class Agent extends EventEmitter {
       progress: (percent, status, partialResult) => {
         this.sendProgress(msg.from, body.taskId, percent, status, partialResult).catch(() => {});
       },
-      delegate: async <T>(agentId: string, capId: string, input: unknown): Promise<T> => {
-        // TODO: implement delegation via AgentClient
-        throw new Error('Delegation not yet implemented');
-      },
+      delegate: async () => { throw new Error('Delegation not yet implemented'); },
       signal: controller.signal,
       log,
     };
 
-    // Execute the handler
     const startTime = Date.now();
     try {
       this.emit('task:start', { taskId: body.taskId, capabilityId: body.capabilityId });
       const output = await capability.handler(inputResult.data, ctx);
       const durationMs = Date.now() - startTime;
-
       await this.sendResult(msg.from, body.taskId, 'success', output, undefined, { durationMs });
       this.emit('task:complete', { taskId: body.taskId, output, durationMs });
     } catch (err) {
       const durationMs = Date.now() - startTime;
       const error = err instanceof Error ? err : new Error(String(err));
-
-      if (controller.signal.aborted) {
-        await this.sendResult(msg.from, body.taskId, 'error', undefined, {
-          code: 'CANCELLED',
-          message: 'Task was cancelled',
-        }, { durationMs });
-      } else {
-        await this.sendResult(msg.from, body.taskId, 'error', undefined, {
-          code: 'HANDLER_ERROR',
-          message: error.message,
-        }, { durationMs });
-      }
-
+      const code = controller.signal.aborted ? 'CANCELLED' : 'HANDLER_ERROR';
+      const message = controller.signal.aborted ? 'Task was cancelled' : error.message;
+      await this.sendResult(msg.from, body.taskId, 'error', undefined, { code, message }, { durationMs });
       this.emit('task:error', { taskId: body.taskId, error });
     } finally {
       this.activeTasks.delete(body.taskId);
@@ -240,81 +374,28 @@ export class Agent extends EventEmitter {
   private handleTaskCancel(msg: MessageEnvelope): void {
     const body = msg.body as TaskCancelBody;
     const controller = this.activeTasks.get(body.taskId);
-    if (controller) {
-      controller.abort();
-    }
+    if (controller) controller.abort();
   }
 
   private async sendAccept(to: string, taskId: string): Promise<void> {
-    const msg = await this.createMessage(to, 'task.accept', {
-      type: 'task.accept',
-      taskId,
-    }, taskId);
-    await this.transport.send(to, msg);
+    await this.transport.send(to, await this.createMessage(to, 'task.accept', { type: 'task.accept', taskId }, taskId));
   }
 
   private async sendReject(to: string, taskId: string, reason: string, message?: string): Promise<void> {
-    const msg = await this.createMessage(to, 'task.reject', {
-      type: 'task.reject',
-      taskId,
-      reason,
-      message,
-    }, taskId);
-    await this.transport.send(to, msg);
+    await this.transport.send(to, await this.createMessage(to, 'task.reject', { type: 'task.reject', taskId, reason, message }, taskId));
   }
 
-  private async sendProgress(
-    to: string,
-    taskId: string,
-    progress: number,
-    status: string,
-    partialResult?: unknown,
-  ): Promise<void> {
-    const msg = await this.createMessage(to, 'task.progress', {
-      type: 'task.progress',
-      taskId,
-      progress,
-      status,
-      partialResult,
-    }, taskId);
-    await this.transport.send(to, msg);
+  private async sendProgress(to: string, taskId: string, progress: number, status: string, partialResult?: unknown): Promise<void> {
+    await this.transport.send(to, await this.createMessage(to, 'task.progress', { type: 'task.progress', taskId, progress, status, partialResult }, taskId));
   }
 
-  private async sendResult(
-    to: string,
-    taskId: string,
-    status: 'success' | 'error' | 'partial',
-    output?: unknown,
-    error?: { code: string; message: string },
-    metrics?: { durationMs: number; tokensUsed?: number },
-  ): Promise<void> {
-    const msg = await this.createMessage(to, 'task.result', {
-      type: 'task.result',
-      taskId,
-      status,
-      output,
-      error,
-      metrics,
-    }, taskId);
-    await this.transport.send(to, msg);
+  private async sendResult(to: string, taskId: string, status: 'success' | 'error' | 'partial', output?: unknown, error?: { code: string; message: string }, metrics?: { durationMs: number; tokensUsed?: number }): Promise<void> {
+    await this.transport.send(to, await this.createMessage(to, 'task.result', { type: 'task.result', taskId, status, output, error, metrics }, taskId));
   }
 
-  private async createMessage(
-    to: string,
-    type: MessageEnvelope['type'],
-    body: unknown,
-    re?: string,
-  ): Promise<MessageEnvelope> {
-    const unsigned = {
-      v: PROTOCOL_VERSION as 1,
-      type,
-      id: ulid(),
-      from: this.identity.id,
-      to,
-      ts: Date.now(),
-      re,
-      body,
-    };
-    return signMessage(this.identity, unsigned);
+  private async createMessage(to: string, type: MessageEnvelope['type'], body: unknown, re?: string): Promise<MessageEnvelope> {
+    return signMessage(this.identity, {
+      v: PROTOCOL_VERSION as 1, type, id: ulid(), from: this.identity.id, to, ts: Date.now(), re, body,
+    });
   }
 }
