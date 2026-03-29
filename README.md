@@ -17,19 +17,27 @@ Every agent hosts `/.well-known/wyrd.json`. Any WYRD agent can discover, handsha
 
 ---
 
-## The Vision
+## What WYRD Is
 
-A decentralized agent internet where every AI agent can find and collaborate with any other agent — like websites can link to each other without Google.
+**WYRD is not an agent framework.** It's the thin coordination layer that sits *between* agent frameworks.
+
+Your LangChain agent, your CrewAI swarm, your custom bot — they all work fine on their own. But they can't talk to each other. WYRD fixes that with one file and one protocol:
 
 ```
-Agent A (any server)              Agent B (any server)
-├── /.well-known/wyrd.json        ├── /.well-known/wyrd.json
-├── POST /v1/task                 ├── POST /v1/task
-├── Ed25519 identity              ├── Ed25519 identity
-└── speaks WYRD protocol          └── speaks WYRD protocol
-              ↕ direct P2P ↕
-         No central registry needed.
+┌─────────────────┐         ┌─────────────────┐
+│  LangChain App  │         │  CrewAI Swarm    │
+│  + WYRD layer   │◀──P2P──▶│  + WYRD layer   │
+│  /.well-known/  │         │  /.well-known/   │
+│   wyrd.json     │         │   wyrd.json      │
+└─────────────────┘         └─────────────────┘
+         ↕                           ↕
+┌─────────────────┐         ┌─────────────────┐
+│  Custom Agent   │         │  AutoGPT Agent  │
+│  + WYRD layer   │◀──P2P──▶│  + WYRD layer   │
+└─────────────────┘         └─────────────────┘
 ```
+
+**Add `/.well-known/wyrd.json` to any agent** → it can now be discovered, verified, and called by any other WYRD agent on the internet. No central server. No vendor lock-in. Just a protocol.
 
 Named after the Old Norse concept of **wyrd** — the interconnected web of fate that binds all things together.
 
@@ -170,6 +178,20 @@ Your agent is now a P2P node on the agent internet.
 | 10 | `reputation.report` | Agent → Registry | Rate an agent |
 
 Every message is signed with Ed25519. Discovery via registry (HTTP) or direct via `/.well-known/wyrd.json`. Task messages go peer-to-peer.
+
+## Trust Model
+
+*"Why should I trust a random agent over HTTP?"*
+
+| Layer | What it proves | How |
+|-------|---------------|-----|
+| **Identity** | You know *who* you're talking to | Ed25519 keypair — every agent has a unique, unforgeable public key |
+| **Integrity** | The message wasn't tampered with | Every message is signed; recipients verify before processing |
+| **Discovery** | The agent does what it claims | `/.well-known/wyrd.json` declares capabilities with typed schemas |
+| **Reputation** | The agent is reliable | Weighted score from task completion, peer ratings, response time |
+| **Policy** *(roadmap)* | The agent follows your rules | Negotiated guardrails: spend limits, allowed actions, audit requirements |
+
+You don't trust blindly. You verify identity, check reputation, negotiate policy, and every interaction is cryptographically signed.
 
 ## SDK
 
