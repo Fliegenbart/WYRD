@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { WebSocketTransport } from './ws-transport.js';
-import type { MessageEnvelope } from '@agentnet/protocol';
+import type { MessageEnvelope } from '@wyrd/protocol';
 
 function makeMessage(from: string, to: string): MessageEnvelope {
   return {

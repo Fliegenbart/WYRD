@@ -1,7 +1,7 @@
 import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { execSync } from 'node:child_process';
-import { generateIdentity } from '@agentnet/identity';
+import { generateIdentity } from '@wyrd/identity';
 
 const COLORS = {
   reset: '\x1b[0m',
@@ -24,11 +24,11 @@ async function main() {
 
   if (!name || name === '--help' || name === '-h') {
     log(`
-${COLORS.bold}${COLORS.cyan}create-agentnet${COLORS.reset} — scaffold a new AgentNet agent
+${COLORS.bold}${COLORS.cyan}create-wyrd${COLORS.reset} — scaffold a new AgentNet agent
 
 ${COLORS.bold}Usage:${COLORS.reset}
-  npx create-agentnet <agent-name>
-  npx create-agentnet my-weather-agent
+  npx create-wyrd <agent-name>
+  npx create-wyrd my-weather-agent
 
 ${COLORS.bold}Options:${COLORS.reset}
   --registry <url>    Registry URL (default: http://localhost:4200)
@@ -41,7 +41,7 @@ ${COLORS.bold}Options:${COLORS.reset}
   const registryUrl = getArg(args, '--registry') ?? 'http://localhost:4200';
   const port = getArg(args, '--port') ?? '4201';
 
-  log(`\n${COLORS.bold}${COLORS.cyan}  create-agentnet${COLORS.reset}\n`);
+  log(`\n${COLORS.bold}${COLORS.cyan}  create-wyrd${COLORS.reset}\n`);
   info(`Creating agent: ${COLORS.bold}${name}${COLORS.reset}`);
 
   // Create directory
@@ -72,7 +72,7 @@ ${COLORS.bold}Options:${COLORS.reset}
           build: 'tsup src/index.ts --format esm',
         },
         dependencies: {
-          '@agentnet/sdk': '^0.1.0',
+          '@wyrd/sdk': '^0.1.0',
           zod: '^3.24.0',
         },
         devDependencies: {
@@ -128,7 +128,7 @@ ${COLORS.bold}Options:${COLORS.reset}
   // Write example capability
   writeFileSync(
     join(dir, 'src', 'capabilities', 'hello.ts'),
-    `import { defineCapability } from '@agentnet/sdk';
+    `import { defineCapability } from '@wyrd/sdk';
 import { z } from 'zod';
 
 export const hello = defineCapability({
@@ -158,12 +158,12 @@ export const hello = defineCapability({
   // Write agent entrypoint
   writeFileSync(
     join(dir, 'src', 'index.ts'),
-    `import { Agent } from '@agentnet/sdk';
+    `import { Agent } from '@wyrd/sdk';
 import { hello } from './capabilities/hello.js';
 
 const agent = new Agent({
   name: '${name}',
-  description: 'My AgentNet agent',
+  description: 'My WYRD agent',
   capabilities: [hello],
   registry: process.env['AGENTNET_REGISTRY_URL'] ?? '${registryUrl}',
   port: Number(process.env['PORT'] ?? ${port}),

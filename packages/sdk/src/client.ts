@@ -1,13 +1,13 @@
 import { ulid } from 'ulid';
-import type { MessageEnvelope, TaskResultBody, TaskProgressBody } from '@agentnet/protocol';
-import { PROTOCOL_VERSION } from '@agentnet/protocol';
+import type { MessageEnvelope, TaskResultBody, TaskProgressBody } from '@wyrd/protocol';
+import { PROTOCOL_VERSION } from '@wyrd/protocol';
 import {
   generateIdentity,
   loadIdentity,
   signMessage,
   type AgentIdentity,
-} from '@agentnet/identity';
-import { WebSocketTransport } from '@agentnet/transport';
+} from '@wyrd/identity';
+import { WebSocketTransport } from '@wyrd/transport';
 import type { DiscoverOptions, DiscoveredAgent, TaskStreamEvent } from './types.js';
 
 export interface AgentClientConfig {

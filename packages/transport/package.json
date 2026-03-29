@@ -1,7 +1,7 @@
 {
-  "name": "@agentnet/transport",
+  "name": "@wyrd/transport",
   "version": "0.1.0",
-  "description": "AgentNet WebSocket transport layer",
+  "description": "WYRD WebSocket transport layer",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -19,8 +19,8 @@
   },
   "dependencies": {
     "ws": "^8.18.0",
-    "@agentnet/protocol": "workspace:*",
-    "@agentnet/identity": "workspace:*"
+    "@wyrd/protocol": "workspace:*",
+    "@wyrd/identity": "workspace:*"
   },
   "devDependencies": {
     "@types/ws": "^8.5.0",

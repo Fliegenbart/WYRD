@@ -1,6 +1,6 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { EventEmitter } from 'node:events';
-import type { MessageEnvelope } from '@agentnet/protocol';
+import type { MessageEnvelope } from '@wyrd/protocol';
 import type { Transport, TransportEvents } from './transport.js';
 
 interface PeerConnection {

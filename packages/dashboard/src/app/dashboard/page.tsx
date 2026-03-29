@@ -24,7 +24,7 @@ export default async function HomePage() {
           <h2 className="text-xl font-semibold text-white mb-2">Registry Offline</h2>
           <p className="text-[var(--text-dim)] mb-4">{error}</p>
           <pre className="rounded-lg bg-[var(--bg-card)] border border-[var(--border)] p-4 text-sm text-left text-[var(--accent)]">
-            pnpm --filter @agentnet/demo run start
+            pnpm --filter @wyrd/demo run start
           </pre>
         </div>
       </div>

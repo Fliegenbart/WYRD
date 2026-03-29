@@ -5,8 +5,8 @@
  * showing discovery, direct tasks, and multi-agent collaboration.
  */
 
-import { createRegistry } from '@agentnet/registry';
-import { Agent, AgentClient, defineCapability } from '@agentnet/sdk';
+import { createRegistry } from '@wyrd/registry';
+import { Agent, AgentClient, defineCapability } from '@wyrd/sdk';
 import { z } from 'zod';
 
 // ── Colors ───────────────────────────────────────────────────────────────────

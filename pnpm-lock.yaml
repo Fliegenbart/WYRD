@@ -21,9 +21,104 @@ importers:
         specifier: ^3.1.0
         version: 3.2.4(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)
 
+  agents/code-reviewer:
+    dependencies:
+      '@wyrd/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      zod:
+        specifier: ^3.24.0
+        version: 3.25.76
+    devDependencies:
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.8)(tsx@4.21.0)(typescript@5.9.3)
+      tsx:
+        specifier: ^4.19.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+
+  agents/flight-finder:
+    dependencies:
+      '@wyrd/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      zod:
+        specifier: ^3.24.0
+        version: 3.25.76
+    devDependencies:
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.8)(tsx@4.21.0)(typescript@5.9.3)
+      tsx:
+        specifier: ^4.19.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+
+  agents/news-summarizer:
+    dependencies:
+      '@wyrd/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      zod:
+        specifier: ^3.24.0
+        version: 3.25.76
+    devDependencies:
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.8)(tsx@4.21.0)(typescript@5.9.3)
+      tsx:
+        specifier: ^4.19.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+
   agents/orchestrator:
     dependencies:
-      '@agentnet/sdk':
+      '@wyrd/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      zod:
+        specifier: ^3.24.0
+        version: 3.25.76
+    devDependencies:
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.8)(tsx@4.21.0)(typescript@5.9.3)
+      tsx:
+        specifier: ^4.19.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+
+  agents/price-tracker:
+    dependencies:
+      '@wyrd/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      zod:
+        specifier: ^3.24.0
+        version: 3.25.76
+    devDependencies:
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.8)(tsx@4.21.0)(typescript@5.9.3)
+      tsx:
+        specifier: ^4.19.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+
+  agents/research-assistant:
+    dependencies:
+      '@wyrd/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
       zod:
@@ -42,7 +137,7 @@ importers:
 
   agents/translator:
     dependencies:
-      '@agentnet/sdk':
+      '@wyrd/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
       zod:
@@ -61,7 +156,7 @@ importers:
 
   agents/weather:
     dependencies:
-      '@agentnet/sdk':
+      '@wyrd/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
       zod:
@@ -80,10 +175,10 @@ importers:
 
   examples/demo:
     dependencies:
-      '@agentnet/registry':
+      '@wyrd/registry':
         specifier: workspace:*
         version: link:../../packages/registry
-      '@agentnet/sdk':
+      '@wyrd/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
       zod:
@@ -99,7 +194,7 @@ importers:
 
   packages/cli:
     dependencies:
-      '@agentnet/identity':
+      '@wyrd/identity':
         specifier: workspace:*
         version: link:../identity
     devDependencies:
@@ -146,12 +241,12 @@ importers:
 
   packages/identity:
     dependencies:
-      '@agentnet/protocol':
-        specifier: workspace:*
-        version: link:../protocol
       '@noble/ed25519':
         specifier: ^2.2.0
         version: 2.3.0
+      '@wyrd/protocol':
+        specifier: workspace:*
+        version: link:../protocol
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -181,15 +276,15 @@ importers:
 
   packages/registry:
     dependencies:
-      '@agentnet/protocol':
-        specifier: workspace:*
-        version: link:../protocol
-      '@agentnet/reputation':
-        specifier: workspace:*
-        version: link:../reputation
       '@hono/node-server':
         specifier: ^1.14.0
         version: 1.19.11(hono@4.12.9)
+      '@wyrd/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      '@wyrd/reputation':
+        specifier: workspace:*
+        version: link:../reputation
       better-sqlite3:
         specifier: ^11.9.0
         version: 11.10.0
@@ -236,13 +331,13 @@ importers:
 
   packages/sdk:
     dependencies:
-      '@agentnet/identity':
+      '@wyrd/identity':
         specifier: workspace:*
         version: link:../identity
-      '@agentnet/protocol':
+      '@wyrd/protocol':
         specifier: workspace:*
         version: link:../protocol
-      '@agentnet/transport':
+      '@wyrd/transport':
         specifier: workspace:*
         version: link:../transport
       ulid:
@@ -267,10 +362,10 @@ importers:
 
   packages/transport:
     dependencies:
-      '@agentnet/identity':
+      '@wyrd/identity':
         specifier: workspace:*
         version: link:../identity
-      '@agentnet/protocol':
+      '@wyrd/protocol':
         specifier: workspace:*
         version: link:../protocol
       ws:

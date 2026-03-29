@@ -1,4 +1,4 @@
-import { Agent, defineCapability } from '@agentnet/sdk';
+import { Agent, defineCapability } from '@wyrd/sdk';
 import { z } from 'zod';
 
 const TOPICS: Record<string, { summary: string; findings: string[]; sources: { title: string; relevance: number }[] }> = {

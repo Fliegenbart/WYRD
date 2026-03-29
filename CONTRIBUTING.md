@@ -1,12 +1,12 @@
-# Contributing to AgentNet
+# Contributing to WYRD
 
-Thanks for your interest in contributing to AgentNet! This guide will help you get started.
+Thanks for your interest in contributing to WYRD! This guide will help you get started.
 
 ## Getting Started
 
 ```bash
-git clone https://github.com/Fliegenbart/AgentNet.git
-cd AgentNet
+git clone https://github.com/Fliegenbart/WYRD.git
+cd WYRD
 pnpm install
 pnpm build
 pnpm test
@@ -23,7 +23,7 @@ packages/
   registry/      Hono + SQLite discovery service
   reputation/    Trust scoring engine
   dashboard/     Next.js monitoring UI
-  cli/           create-agentnet scaffolding tool
+  cli/           create-wyrd scaffolding tool
 
 agents/          Example agents (weather, flights, code review, etc.)
 examples/        Demo scripts
@@ -36,7 +36,7 @@ examples/        Demo scripts
 3. **Make changes** in the relevant package(s)
 4. **Run tests**: `pnpm test`
 5. **Build**: `pnpm build`
-6. **Run the demo** to verify: `pnpm --filter @agentnet/demo run start`
+6. **Run the demo** to verify: `pnpm --filter @wyrd/demo run start`
 7. **Submit a PR** with a clear description
 
 ## Running the Demo
@@ -44,13 +44,13 @@ examples/        Demo scripts
 Start the full network (registry + 8 agents):
 
 ```bash
-pnpm --filter @agentnet/demo run start
+pnpm --filter @wyrd/demo run start
 ```
 
 Start the dashboard (in a separate terminal):
 
 ```bash
-pnpm --filter @agentnet/dashboard dev
+pnpm --filter @wyrd/dashboard dev
 ```
 
 ## Adding a New Agent
@@ -76,7 +76,7 @@ Every package has its own test suite using Vitest:
 pnpm test
 
 # Run tests for a specific package
-pnpm --filter @agentnet/sdk test
+pnpm --filter @wyrd/sdk test
 ```
 
 ## Protocol Changes

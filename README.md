@@ -1,12 +1,14 @@
 <div align="center">
 
-# AgentNet
+<picture>
+  <img alt="WYRD" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 60'><text x='100' y='45' font-family='Georgia,serif' font-size='48' font-weight='700' fill='%23d4a843' text-anchor='middle' letter-spacing='12'>WYRD</text></svg>" width="200" />
+</picture>
 
-**The open protocol for agent-to-agent communication on the internet.**
+### The open coordination layer for the agent internet.
 
-Deploy agents. Discover agents. Let them work together.
+Discover. Communicate. Build trust. Let agents weave their fates together.
 
-[Quickstart](#quickstart) &middot; [How It Works](#how-it-works) &middot; [Demo](#demo) &middot; [Protocol](#protocol) &middot; [SDK](#sdk-api) &middot; [Dashboard](#dashboard)
+[Quickstart](#quickstart) · [Protocol](#protocol) · [SDK](#sdk) · [Dashboard](#dashboard) · [Agents](#agents)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
@@ -17,50 +19,47 @@ Deploy agents. Discover agents. Let them work together.
 
 ## The Problem
 
-AI agents are siloed. Your flight agent can't talk to your calendar agent. Your research bot can't ask a translation bot for help. There's no way for agents to **discover**, **trust**, and **collaborate** with each other across the internet.
+AI agents are siloed. Your weather bot can't ask your flight bot for help. Your code reviewer can't delegate to a translator. There's no standard way for agents to **discover**, **trust**, and **collaborate** across the internet.
 
-## The Solution
+## WYRD
 
-AgentNet is an open protocol that lets any AI agent discover, communicate with, and build trust with any other agent on the internet. Think DNS + HTTP, but for agents.
+WYRD is an open protocol and SDK that lets any AI agent discover, communicate with, and build trust with any other agent on the internet. Named after the Old Norse concept of fate — the interconnected web that binds all things together.
 
 ```
-┌─────────┐     ┌──────────┐     ┌─────────────┐
-│ Weather  │────▶│ Registry │◀────│ Translator  │
-│  Agent   │     │(Discovery)│     │   Agent     │
-└─────────┘     └──────────┘     └─────────────┘
-      │              │                   │
-      └──────────────┼───────────────────┘
-                     │
-              ┌──────────────┐
-              │ Orchestrator │  "Plan a trip to Tokyo"
-              │    Agent     │  → discovers weather + translator
-              └──────────────┘  → delegates tasks → returns result
+┌──────────┐      ┌──────────┐      ┌──────────┐
+│ Weather  │─────▶│ Registry │◀─────│ Flights  │
+│  Agent   │      │ (WYRD)   │      │  Agent   │
+└──────────┘      └──────────┘      └──────────┘
+      │                │                   │
+      └────────────────┼───────────────────┘
+                       │
+               ┌───────────────┐
+               │  Orchestrator │  "Plan a trip to Tokyo"
+               │     Agent     │  → discovers weather + flights + translator
+               └───────────────┘  → delegates tasks → returns plan
 ```
 
 ## Quickstart
 
-**Run the multi-agent demo in 30 seconds:**
+**Run the multi-agent demo:**
 
 ```bash
-git clone https://github.com/yourusername/agentnet.git
-cd agentnet
+git clone https://github.com/Fliegenbart/AgentNet.git
+cd AgentNet
 pnpm install
 pnpm build
-pnpm --filter @agentnet/demo run start
+pnpm --filter @wyrd/demo run start
 ```
 
-You'll see agents discover each other, exchange tasks, and collaborate in real-time.
-
-**Build your first agent in 15 lines:**
+**Build your first agent:**
 
 ```typescript
-import { Agent, defineCapability } from '@agentnet/sdk';
+import { Agent, defineCapability } from '@wyrd/sdk';
 import { z } from 'zod';
 
 const weather = defineCapability({
   id: 'get-weather',
-  name: 'Weather',
-  description: 'Get weather forecast for a city',
+  name: 'Weather Forecast',
   tags: ['weather', 'forecast'],
   input: z.object({ city: z.string() }),
   output: z.object({ temp: z.number(), conditions: z.string() }),
@@ -77,47 +76,6 @@ const agent = new Agent({
 });
 
 await agent.start();
-```
-
-## How It Works
-
-AgentNet has three layers:
-
-### 1. Identity
-Every agent gets a cryptographic identity (Ed25519 keypair). The agent ID is its public key, base58-encoded. All messages are signed — you always know who you're talking to.
-
-### 2. Discovery
-Agents announce their capabilities to a registry. Other agents search the registry to find collaborators: *"I need an agent that can translate text"* → registry returns matching agents with their capabilities and reputation scores.
-
-### 3. Task Execution
-Agents communicate directly via WebSocket. The protocol has exactly **10 message types** — simple enough to implement in any language, powerful enough for complex multi-agent workflows.
-
-## Demo
-
-The demo starts a registry + 2 agents, then shows them collaborating:
-
-```
-━━━ Demo: Agent Discovery & Collaboration ━━━
-
-Discovering all agents on the network...
-  Found 2 agents:
-    WeatherBot (92PXhCpX...) — capabilities: get-weather
-    TranslatorBot (8STNYbjp...) — capabilities: translate-text
-
-━━━ Demo: Multi-Agent Collaboration ━━━
-
-  Tokyo: 18°C, Partly Cloudy
-  New York: 22°C, Sunny
-  London: 14°C, Rainy
-
-  Useful Japanese phrases:
-    "hello" → "こんにちは" (confidence: 98%)
-    "thank you" → "ありがとう" (confidence: 98%)
-    "goodbye" → "さようなら" (confidence: 98%)
-
-━━━ Network Stats ━━━
-  Agents online: 2
-  Total capabilities: 2
 ```
 
 ## Protocol
@@ -139,12 +97,12 @@ Discovering all agents on the network...
 
 Every message is signed with Ed25519. Discovery goes through the registry (HTTP). Task messages go peer-to-peer (WebSocket).
 
-## SDK API
+## SDK
 
 ### Building an Agent
 
 ```typescript
-import { Agent, defineCapability } from '@agentnet/sdk';
+import { Agent, defineCapability } from '@wyrd/sdk';
 
 const cap = defineCapability({
   id: 'my-capability',
@@ -171,11 +129,9 @@ await agent.start();
 ### Calling Other Agents
 
 ```typescript
-import { AgentClient } from '@agentnet/sdk';
+import { AgentClient } from '@wyrd/sdk';
 
-const client = new AgentClient({
-  registry: 'http://localhost:4200',
-});
+const client = new AgentClient({ registry: 'http://localhost:4200' });
 
 // Discover agents by capability
 const agents = await client.discover({ tags: ['weather'] });
@@ -184,81 +140,86 @@ const agents = await client.discover({ tags: ['weather'] });
 const result = await client.task(agents[0].agentId, 'get-weather', {
   city: 'Tokyo',
 });
-console.log(result.output); // { temp: 18, conditions: 'Partly Cloudy' }
 
 // Rate the agent
 await client.rate(agents[0].agentId, result.taskId, { rating: 5 });
+```
+
+## Dashboard
+
+WYRD includes a live monitoring dashboard:
+
+- **Overview** — network stats, agent cards, animated network graph
+- **Agents** — searchable directory of all registered agents
+- **Network** — force-directed graph with animated data flow
+- **Playground** — discover agents and send tasks interactively
+
+```bash
+pnpm --filter @wyrd/demo run start    # start agents
+pnpm --filter @wyrd/dashboard dev     # start dashboard → http://localhost:3000
 ```
 
 ## Architecture
 
 ```
 packages/
-  protocol/      @agentnet/protocol    — 10 message types, Zod schemas
-  identity/      @agentnet/identity    — Ed25519 crypto identity
-  transport/     @agentnet/transport   — WebSocket with auto-reconnect
-  sdk/           @agentnet/sdk         — Agent + AgentClient (main API)
-  registry/      @agentnet/registry    — Hono + SQLite discovery service
-  reputation/    @agentnet/reputation  — Trust scoring engine
-
-agents/
-  weather/            WeatherBot         — Weather forecasts
-  translator/         TranslatorBot      — Text translation
-  flight-finder/      FlightFinder       — Flight search
-  code-reviewer/      CodeReviewer       — Code review (bugs, style, security)
-  research-assistant/ ResearchAssistant  — Topic research with sources
-  price-tracker/      PriceTracker       — Price comparison across stores
-  news-summarizer/    NewsSummarizer     — News with sentiment analysis
-  orchestrator/       Orchestrator       — Multi-agent task decomposition
+  protocol/       @wyrd/protocol       — 10 message types, Zod schemas
+  identity/       @wyrd/identity       — Ed25519 crypto identity
+  transport/      @wyrd/transport      — WebSocket with auto-reconnect
+  sdk/            @wyrd/sdk            — Agent + AgentClient (main API)
+  registry/       @wyrd/registry       — Hono + SQLite discovery service
+  reputation/     @wyrd/reputation     — Trust scoring engine
+  dashboard/      @wyrd/dashboard      — Next.js 15 monitoring UI
+  cli/            create-wyrd          — CLI scaffolding tool
 ```
 
-## Reputation System
+## Agents
+
+8 example agents included:
+
+| Agent | Capability | Description |
+|-------|-----------|-------------|
+| WeatherBot | `get-weather` | Weather forecasts |
+| TranslatorBot | `translate-text` | Text translation |
+| FlightFinder | `search-flights` | Flight search |
+| CodeReviewer | `review-code` | Code review (bugs, style, security) |
+| ResearchAssistant | `research-topic` | Topic research with sources |
+| PriceTracker | `track-price` | Price comparison across stores |
+| NewsSummarizer | `summarize-news` | News with sentiment analysis |
+| Orchestrator | `plan-trip` | Multi-agent task decomposition |
+
+## Reputation
 
 Agents build trust through a weighted composite score (0-100):
 
-- **Task success rate** (35%) — how often tasks complete successfully
-- **Peer ratings** (25%) — 1-5 star ratings from other agents
-- **Response speed** (15%) — performance vs SLA targets
-- **Longevity** (10%) — how long the agent has been active
-- **Task volume** (5%) — number of tasks completed
-- **Consistency** (10%) — low variance in ratings
+- **Task success rate** (35%)
+- **Peer ratings** (25%)
+- **Response speed** (15%)
+- **Longevity** (10%)
+- **Volume** (5%)
+- **Consistency** (10%)
 
-Anti-gaming measures: rating weight decays for repeated reporter-subject pairs, outlier ratings are down-weighted, new agents start at a neutral score with "low" confidence.
-
-## Dashboard
-
-AgentNet includes a live monitoring dashboard (Next.js + Tailwind):
-
-- **Overview** — network stats, agent cards, animated network graph
-- **Agents** — searchable directory of all registered agents
-- **Network** — force-directed graph visualization with animated data packets
-- **Playground** — discover agents and send tasks interactively
-
-```bash
-# Start agents first
-pnpm --filter @agentnet/demo run start
-
-# Then in another terminal
-pnpm --filter @agentnet/dashboard dev
-# → http://localhost:3000
-```
+Anti-gaming: rating weight decays for repeated pairs, outlier ratings down-weighted, new agents start neutral.
 
 ## Roadmap
 
-- [x] ~~Dashboard — live network visualization~~
-- [x] ~~`npx create-agentnet` — CLI scaffolding tool~~
-- [x] ~~8 example agents~~
-- [ ] A2A protocol compatibility layer
-- [ ] MCP tool exposure as capabilities
-- [ ] Payment/micropayment layer
+- [x] Protocol, SDK, Registry, Reputation engine
+- [x] Dashboard with network graph and playground
+- [x] 8 example agents
+- [x] CLI scaffolding tool
+- [ ] Hosted public registry (`registry.wyrd.dev`)
+- [ ] A2A Agent Card compatibility
+- [ ] Auth & access control
+- [ ] Trust cards & policy negotiation
+- [ ] Payment / micropayment layer
 - [ ] Agent marketplace
-- [ ] Multi-registry federation
-- [ ] WASM sandboxed agent execution
+
+See [docs/ROADMAP.md](docs/ROADMAP.md) for the full strategy.
 
 ## Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-[MIT](LICENSE) — build whatever you want with it.
+[MIT](LICENSE)

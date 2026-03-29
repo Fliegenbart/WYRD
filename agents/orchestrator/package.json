@@ -1,8 +1,8 @@
 {
-  "name": "@agentnet/agent-orchestrator",
+  "name": "@wyrd/agent-orchestrator",
   "version": "0.1.0",
   "private": true,
-  "description": "AgentNet orchestrator — decomposes complex tasks and delegates to other agents",
+  "description": "WYRD orchestrator — decomposes complex tasks and delegates to other agents",
   "type": "module",
   "scripts": {
     "dev": "tsx src/index.ts",
@@ -10,7 +10,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@agentnet/sdk": "workspace:*",
+    "@wyrd/sdk": "workspace:*",
     "zod": "^3.24.0"
   },
   "devDependencies": {

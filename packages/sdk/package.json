@@ -1,7 +1,7 @@
 {
-  "name": "@agentnet/sdk",
+  "name": "@wyrd/sdk",
   "version": "0.1.0",
-  "description": "AgentNet SDK — build and connect AI agents in 15 lines of code",
+  "description": "WYRD SDK — build and connect AI agents in 15 lines of code",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -18,9 +18,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@agentnet/protocol": "workspace:*",
-    "@agentnet/identity": "workspace:*",
-    "@agentnet/transport": "workspace:*",
+    "@wyrd/protocol": "workspace:*",
+    "@wyrd/identity": "workspace:*",
+    "@wyrd/transport": "workspace:*",
     "zod": "^3.24.0",
     "zod-to-json-schema": "^3.24.0",
     "ulid": "^2.3.0"

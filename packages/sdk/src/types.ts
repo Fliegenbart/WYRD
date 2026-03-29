@@ -1,6 +1,6 @@
 import type { z } from 'zod';
-import type { Capability, Pricing, Sla } from '@agentnet/protocol';
-import type { AgentIdentity } from '@agentnet/identity';
+import type { Capability, Pricing, Sla } from '@wyrd/protocol';
+import type { AgentIdentity } from '@wyrd/identity';
 
 export interface AgentConfig {
   /** Human-readable agent name */

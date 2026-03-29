@@ -1,10 +1,10 @@
 {
-  "name": "create-agentnet",
+  "name": "create-wyrd",
   "version": "0.1.0",
-  "description": "Create AgentNet agents, registries, and full-stack projects",
+  "description": "Create WYRD agents — the open coordination layer for the agent internet",
   "type": "module",
   "bin": {
-    "create-agentnet": "./dist/index.js"
+    "create-wyrd": "./dist/index.js"
   },
   "main": "./dist/index.js",
   "scripts": {
@@ -13,7 +13,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@agentnet/identity": "workspace:*"
+    "@wyrd/identity": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.4.0",

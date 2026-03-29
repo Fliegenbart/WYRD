@@ -98,9 +98,9 @@ describe('Agent', () => {
     await agent.start();
 
     // Connect as a client and send a task
-    const { WebSocketTransport } = await import('@agentnet/transport');
-    const { generateIdentity, signMessage } = await import('@agentnet/identity');
-    const { PROTOCOL_VERSION } = await import('@agentnet/protocol');
+    const { WebSocketTransport } = await import('@wyrd/transport');
+    const { generateIdentity, signMessage } = await import('@wyrd/identity');
+    const { PROTOCOL_VERSION } = await import('@wyrd/protocol');
     const { ulid } = await import('ulid');
 
     const clientIdentity = await generateIdentity();
@@ -149,9 +149,9 @@ describe('Agent', () => {
     agents.push(agent);
     await agent.start();
 
-    const { WebSocketTransport } = await import('@agentnet/transport');
-    const { generateIdentity, signMessage } = await import('@agentnet/identity');
-    const { PROTOCOL_VERSION } = await import('@agentnet/protocol');
+    const { WebSocketTransport } = await import('@wyrd/transport');
+    const { generateIdentity, signMessage } = await import('@wyrd/identity');
+    const { PROTOCOL_VERSION } = await import('@wyrd/protocol');
     const { ulid } = await import('ulid');
 
     const clientIdentity = await generateIdentity();

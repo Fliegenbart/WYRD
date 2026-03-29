@@ -1,16 +1,16 @@
 {
-  "name": "@agentnet/demo",
+  "name": "@wyrd/demo",
   "version": "0.1.0",
   "private": true,
-  "description": "AgentNet multi-agent demo — watch agents discover and collaborate",
+  "description": "WYRD multi-agent demo — watch agents discover and collaborate",
   "type": "module",
   "scripts": {
     "demo": "tsx src/demo.ts",
     "start": "tsx src/start-all.ts"
   },
   "dependencies": {
-    "@agentnet/sdk": "workspace:*",
-    "@agentnet/registry": "workspace:*",
+    "@wyrd/sdk": "workspace:*",
+    "@wyrd/registry": "workspace:*",
     "zod": "^3.24.0"
   },
   "devDependencies": {

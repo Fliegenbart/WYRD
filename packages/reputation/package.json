@@ -1,7 +1,7 @@
 {
-  "name": "@agentnet/reputation",
+  "name": "@wyrd/reputation",
   "version": "0.1.0",
-  "description": "AgentNet reputation and trust scoring engine",
+  "description": "WYRD reputation and trust scoring engine",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

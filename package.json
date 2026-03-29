@@ -1,7 +1,7 @@
 {
-  "name": "agentnet",
+  "name": "wyrd",
   "private": true,
-  "description": "The open protocol for agent-to-agent communication on the internet",
+  "description": "WYRD — The open coordination layer for the agent internet",
   "license": "MIT",
   "engines": {
     "node": ">=20"

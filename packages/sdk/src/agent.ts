@@ -6,16 +6,16 @@ import type {
   TaskProgressBody,
   TaskResultBody,
   TaskCancelBody,
-} from '@agentnet/protocol';
-import { PROTOCOL_VERSION, REGISTRY_TARGET } from '@agentnet/protocol';
+} from '@wyrd/protocol';
+import { PROTOCOL_VERSION, REGISTRY_TARGET } from '@wyrd/protocol';
 import {
   generateIdentity,
   loadIdentity,
   signMessage,
   verifyMessage,
   type AgentIdentity,
-} from '@agentnet/identity';
-import { WebSocketTransport } from '@agentnet/transport';
+} from '@wyrd/identity';
+import { WebSocketTransport } from '@wyrd/transport';
 import type { AgentConfig, CapabilityDefinition, TaskContext, TaskLogger } from './types.js';
 import { toWireCapability } from './capability.js';
 

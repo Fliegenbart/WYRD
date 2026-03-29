@@ -1,4 +1,4 @@
-import type { MessageEnvelope } from '@agentnet/protocol';
+import type { MessageEnvelope } from '@wyrd/protocol';
 import type { AgentIdentity } from './identity.js';
 import { verifySignature } from './identity.js';
 

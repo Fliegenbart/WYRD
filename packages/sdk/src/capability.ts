@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import type { Capability } from '@agentnet/protocol';
+import type { Capability } from '@wyrd/protocol';
 import type { CapabilityDefinition, CapabilityHandler } from './types.js';
 
 export interface DefineCapabilityOptions<

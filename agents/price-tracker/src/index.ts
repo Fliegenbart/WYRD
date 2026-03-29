@@ -1,4 +1,4 @@
-import { Agent, defineCapability } from '@agentnet/sdk';
+import { Agent, defineCapability } from '@wyrd/sdk';
 import { z } from 'zod';
 
 const STORES = ['Amazon', 'Best Buy', 'Walmart', 'eBay', 'Target', 'Newegg', 'B&H Photo'];

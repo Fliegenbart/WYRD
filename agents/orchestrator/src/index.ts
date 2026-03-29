@@ -1,4 +1,4 @@
-import { Agent, AgentClient, defineCapability } from '@agentnet/sdk';
+import { Agent, AgentClient, defineCapability } from '@wyrd/sdk';
 import { z } from 'zod';
 
 const registryUrl = process.env['AGENTNET_REGISTRY_URL'] ?? 'http://localhost:4200';

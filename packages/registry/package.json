@@ -1,7 +1,7 @@
 {
-  "name": "@agentnet/registry",
+  "name": "@wyrd/registry",
   "version": "0.1.0",
-  "description": "AgentNet discovery registry — find and connect agents",
+  "description": "WYRD discovery registry — find and connect agents",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -22,8 +22,8 @@
     "@hono/node-server": "^1.14.0",
     "better-sqlite3": "^11.9.0",
     "drizzle-orm": "^0.44.0",
-    "@agentnet/protocol": "workspace:*",
-    "@agentnet/reputation": "workspace:*",
+    "@wyrd/protocol": "workspace:*",
+    "@wyrd/reputation": "workspace:*",
     "ulid": "^2.3.0"
   },
   "devDependencies": {

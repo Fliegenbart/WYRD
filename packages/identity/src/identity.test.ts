@@ -5,7 +5,7 @@ import {
   verifySignature,
 } from './identity.js';
 import { signMessage, verifyMessage } from './signing.js';
-import type { MessageEnvelope } from '@agentnet/protocol';
+import type { MessageEnvelope } from '@wyrd/protocol';
 
 describe('Identity', () => {
   it('generates a new identity with a valid ID', async () => {

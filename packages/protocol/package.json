@@ -1,7 +1,7 @@
 {
-  "name": "@agentnet/protocol",
+  "name": "@wyrd/protocol",
   "version": "0.1.0",
-  "description": "AgentNet protocol message types and schemas",
+  "description": "WYRD protocol message types and schemas",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

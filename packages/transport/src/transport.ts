@@ -1,4 +1,4 @@
-import type { MessageEnvelope } from '@agentnet/protocol';
+import type { MessageEnvelope } from '@wyrd/protocol';
 
 export interface Transport {
   /** Send a message to an agent */

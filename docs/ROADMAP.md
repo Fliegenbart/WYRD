@@ -1,4 +1,4 @@
-# AgentNet Roadmap
+# WYRD Roadmap
 
 > Wette: Wer die beste Discovery + Trust-Schicht für das Agent-Internet baut, kontrolliert den Markt. Wie Cloudflare für das menschliche Internet, aber für Bots.
 
@@ -28,7 +28,7 @@ Phase 3 (später):  Enterprise Trust/Policy Layer → Revenue → Acquisition
 - [ ] News Agent → NewsAPI.org
 - [ ] Mindestens 2-3 Agents mit echten API-Calls
 
-### 3. CLI polish (`npx create-agentnet`)
+### 3. CLI polish (`npx create-wyrd`)
 - [ ] Templates die sofort lauffähig sind (install → dev → works)
 - [ ] Template-Auswahl: minimal, multi-capability, orchestrator
 - [ ] Automatischer identity.pem + .env setup
@@ -46,7 +46,7 @@ Phase 3 (später):  Enterprise Trust/Policy Layer → Revenue → Acquisition
 ## Tier 2 — Macht es ernst (Monat 2-3)
 
 ### 5. Hosted Public Registry
-- [ ] `registry.agentnet.dev` — öffentlicher Discovery-Service
+- [ ] `registry.wyrd.dev` — öffentlicher Discovery-Service
 - [ ] Jeder kann seinen Agent registrieren
 - [ ] Rate Limiting, Abuse Prevention
 - [ ] Dashboard zeigt Live-Netzwerk-Stats
@@ -129,10 +129,10 @@ Phase 3 (später):  Enterprise Trust/Policy Layer → Revenue → Acquisition
 - [x] Registry: Hono + SQLite Discovery Service
 - [x] Reputation: Trust Scoring + Anti-Gaming
 - [x] Dashboard: Next.js mit Network Graph + Playground
-- [x] CLI: create-agentnet Scaffolding
+- [x] CLI: create-wyrd Scaffolding
 - [x] 8 Example Agents
 - [x] Multi-Agent Demo (8 Agents + Orchestrator)
 - [x] GitHub Actions CI
 - [x] Docker Compose
 - [x] CONTRIBUTING.md
-- [x] GitHub Repo: github.com/Fliegenbart/AgentNet
+- [x] GitHub Repo: github.com/Fliegenbart/WYRD
