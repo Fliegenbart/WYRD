@@ -6,9 +6,9 @@
 
 ### The open coordination layer for the agent internet.
 
-Discover. Communicate. Build trust. Let agents weave their fates together.
+Every agent hosts `/.well-known/wyrd.json`. Any WYRD agent can discover, handshake, and collaborate with it directly — no central server required.
 
-[Quickstart](#quickstart) · [Protocol](#protocol) · [SDK](#sdk) · [Dashboard](#dashboard) · [Agents](#agents)
+[Live Demo](https://dashboard-wine-zeta-35.vercel.app) · [Quickstart](#quickstart) · [P2P Protocol](#peer-to-peer) · [SDK](#sdk) · [Agents](#agents)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
@@ -17,31 +17,25 @@ Discover. Communicate. Build trust. Let agents weave their fates together.
 
 ---
 
-## The Problem
+## The Vision
 
-AI agents are siloed. Your weather bot can't ask your flight bot for help. Your code reviewer can't delegate to a translator. There's no standard way for agents to **discover**, **trust**, and **collaborate** across the internet.
-
-## WYRD
-
-WYRD is an open protocol and SDK that lets any AI agent discover, communicate with, and build trust with any other agent on the internet. Named after the Old Norse concept of fate — the interconnected web that binds all things together.
+A decentralized agent internet where every AI agent can find and collaborate with any other agent — like websites can link to each other without Google.
 
 ```
-┌──────────┐      ┌──────────┐      ┌──────────┐
-│ Weather  │─────▶│ Registry │◀─────│ Flights  │
-│  Agent   │      │ (WYRD)   │      │  Agent   │
-└──────────┘      └──────────┘      └──────────┘
-      │                │                   │
-      └────────────────┼───────────────────┘
-                       │
-               ┌───────────────┐
-               │  Orchestrator │  "Plan a trip to Tokyo"
-               │     Agent     │  → discovers weather + flights + translator
-               └───────────────┘  → delegates tasks → returns plan
+Agent A (any server)              Agent B (any server)
+├── /.well-known/wyrd.json        ├── /.well-known/wyrd.json
+├── POST /v1/task                 ├── POST /v1/task
+├── Ed25519 identity              ├── Ed25519 identity
+└── speaks WYRD protocol          └── speaks WYRD protocol
+              ↕ direct P2P ↕
+         No central registry needed.
 ```
+
+Named after the Old Norse concept of **wyrd** — the interconnected web of fate that binds all things together.
 
 ## Quickstart
 
-**Run the multi-agent demo:**
+**Run the full demo (8 agents with real APIs):**
 
 ```bash
 git clone https://github.com/Fliegenbart/AgentNet.git
@@ -51,7 +45,53 @@ pnpm build
 pnpm --filter @wyrd/demo run start
 ```
 
-**Build your first agent:**
+You'll see agents discover each other, exchange tasks, and collaborate — with **real weather data** (Open-Meteo), **real translations** (MyMemory), and **real news** (Google News RSS).
+
+## Peer-to-Peer
+
+Every WYRD agent is a self-contained HTTP + WebSocket server. No registry needed.
+
+**Connect directly by URL:**
+
+```typescript
+import { AgentClient } from '@wyrd/sdk';
+
+const client = new AgentClient({}); // no registry!
+
+// Read any agent's identity card
+const card = await client.fetchWyrdCard('https://weather.example.com');
+// → { name: 'WeatherBot', capabilities: [...], publicKey: '...' }
+
+// Send a task directly — P2P, no middleman
+const result = await client.directTask(
+  'https://weather.example.com',
+  'get-weather',
+  { city: 'Tokyo' },
+);
+// → { output: { temperature: 10.5, conditions: 'Clear sky', source: 'Open-Meteo' } }
+```
+
+**The `/.well-known/wyrd.json` standard:**
+
+Every WYRD agent automatically serves its identity card:
+
+```json
+{
+  "wyrd": "1.0",
+  "id": "7Xk9mP2...",
+  "name": "WeatherBot",
+  "capabilities": [{ "id": "get-weather", "tags": ["weather"] }],
+  "publicKey": "7Xk9mP2...",
+  "transport": {
+    "http": "https://weather.example.com/v1/task",
+    "websocket": "wss://weather.example.com/ws"
+  }
+}
+```
+
+The registry is **optional** — a search engine for agents, not a gatekeeper.
+
+## Build Your First Agent
 
 ```typescript
 import { Agent, defineCapability } from '@wyrd/sdk';
@@ -72,15 +112,20 @@ const weather = defineCapability({
 const agent = new Agent({
   name: 'WeatherBot',
   capabilities: [weather],
-  registry: 'http://localhost:4200',
 });
 
 await agent.start();
+// → HTTP server on auto-assigned port
+// → /.well-known/wyrd.json served automatically
+// → POST /v1/task ready for incoming tasks
+// → WebSocket listening for real-time connections
 ```
+
+Your agent is now a P2P node on the agent internet.
 
 ## Protocol
 
-10 message types. That's it.
+10 message types. Simple enough for any language. Powerful enough for multi-agent workflows.
 
 | # | Type | Direction | Purpose |
 |---|------|-----------|---------|
@@ -95,123 +140,106 @@ await agent.start();
 | 9 | `task.cancel` | Agent → Agent | Cancel task |
 | 10 | `reputation.report` | Agent → Registry | Rate an agent |
 
-Every message is signed with Ed25519. Discovery goes through the registry (HTTP). Task messages go peer-to-peer (WebSocket).
+Every message is signed with Ed25519. Discovery via registry (HTTP) or direct via `/.well-known/wyrd.json`. Task messages go peer-to-peer.
 
 ## SDK
 
-### Building an Agent
-
-```typescript
-import { Agent, defineCapability } from '@wyrd/sdk';
-
-const cap = defineCapability({
-  id: 'my-capability',
-  name: 'My Capability',
-  description: 'Does something useful',
-  tags: ['example'],
-  input: z.object({ query: z.string() }),
-  output: z.object({ answer: z.string() }),
-  handler: async (input, ctx) => {
-    ctx.progress(50, 'Working...');
-    return { answer: 'Done!' };
-  },
-});
-
-const agent = new Agent({
-  name: 'MyAgent',
-  capabilities: [cap],
-  registry: 'http://localhost:4200',
-});
-
-await agent.start();
-```
-
-### Calling Other Agents
+### AgentClient — Two Ways to Connect
 
 ```typescript
 import { AgentClient } from '@wyrd/sdk';
 
-const client = new AgentClient({ registry: 'http://localhost:4200' });
+// ── P2P Mode (no registry) ──────────────────────────
+const p2p = new AgentClient({});
 
-// Discover agents by capability
-const agents = await client.discover({ tags: ['weather'] });
+// Direct task by URL
+const result = await p2p.directTask('https://weather.example.com', 'get-weather', { city: 'Tokyo' });
 
-// Send a task
-const result = await client.task(agents[0].agentId, 'get-weather', {
-  city: 'Tokyo',
-});
+// Read agent's WYRD card
+const card = await p2p.fetchWyrdCard('https://weather.example.com');
 
-// Rate the agent
-await client.rate(agents[0].agentId, result.taskId, { rating: 5 });
+// ── Registry Mode (discovery) ────────────────────────
+const registry = new AgentClient({ registry: 'http://localhost:4200' });
+
+// Discover agents by tag
+const agents = await registry.discover({ tags: ['weather'] });
+
+// Task by agent ID
+const result2 = await registry.task(agents[0].agentId, 'get-weather', { city: 'Tokyo' });
 ```
+
+## Agents
+
+8 example agents — 3 with real APIs (no API keys required):
+
+| Agent | Capability | Data Source |
+|-------|-----------|-------------|
+| WeatherBot | `get-weather` | **Open-Meteo API** (real) |
+| TranslatorBot | `translate-text` | **MyMemory API** (real) |
+| NewsSummarizer | `summarize-news` | **Google News RSS** (real) |
+| FlightFinder | `search-flights` | Simulated |
+| CodeReviewer | `review-code` | Simulated |
+| ResearchAssistant | `research-topic` | Simulated |
+| PriceTracker | `track-price` | Simulated |
+| Orchestrator | `plan-trip` | Chains other agents |
+
+The Orchestrator demo: "Plan a trip to Tokyo" → discovers WeatherBot + FlightFinder + TranslatorBot + NewsSummarizer → delegates tasks → returns a plan with real weather, translations, and news.
+
+## A2A Compatibility
+
+WYRD agents are compatible with the [A2A protocol](https://a2a-protocol.org):
+
+- `GET /v1/agents/:id/agent-card` — A2A-format Agent Card
+- `GET /.well-known/agent-card.json` — Registry's own Agent Card
+- Capabilities mapped as A2A Skills with input/output schemas
+- WYRD reputation score included as extension
 
 ## Dashboard
 
-WYRD includes a live monitoring dashboard:
+Live monitoring dashboard deployed at **[dashboard-wine-zeta-35.vercel.app](https://dashboard-wine-zeta-35.vercel.app)**:
 
-- **Overview** — network stats, agent cards, animated network graph
-- **Agents** — searchable directory of all registered agents
-- **Network** — force-directed graph with animated data flow
+- **Landing Page** — WYRD branding, animated network graph, protocol overview
+- **Dashboard** — network stats, agent cards, live network visualization
 - **Playground** — discover agents and send tasks interactively
 
 ```bash
-pnpm --filter @wyrd/demo run start    # start agents
-pnpm --filter @wyrd/dashboard dev     # start dashboard → http://localhost:3000
+pnpm --filter @wyrd/dashboard dev   # → http://localhost:3000
 ```
 
 ## Architecture
 
 ```
 packages/
-  protocol/       @wyrd/protocol       — 10 message types, Zod schemas
-  identity/       @wyrd/identity       — Ed25519 crypto identity
-  transport/      @wyrd/transport      — WebSocket with auto-reconnect
-  sdk/            @wyrd/sdk            — Agent + AgentClient (main API)
-  registry/       @wyrd/registry       — Hono + SQLite discovery service
-  reputation/     @wyrd/reputation     — Trust scoring engine
-  dashboard/      @wyrd/dashboard      — Next.js 15 monitoring UI
-  cli/            create-wyrd          — CLI scaffolding tool
+  protocol/       @wyrd/protocol     — 10 message types, Zod schemas
+  identity/       @wyrd/identity     — Ed25519 crypto identity
+  transport/      @wyrd/transport    — WebSocket with auto-reconnect
+  sdk/            @wyrd/sdk          — Agent + AgentClient (P2P + registry)
+  registry/       @wyrd/registry     — Hono + SQLite discovery service
+  reputation/     @wyrd/reputation   — Trust scoring engine
+  dashboard/      @wyrd/dashboard    — Next.js 15 monitoring UI + landing page
+  cli/            create-wyrd        — CLI scaffolding tool
+
+agents/           8 example agents (3 with real APIs)
 ```
-
-## Agents
-
-8 example agents included:
-
-| Agent | Capability | Description |
-|-------|-----------|-------------|
-| WeatherBot | `get-weather` | Weather forecasts |
-| TranslatorBot | `translate-text` | Text translation |
-| FlightFinder | `search-flights` | Flight search |
-| CodeReviewer | `review-code` | Code review (bugs, style, security) |
-| ResearchAssistant | `research-topic` | Topic research with sources |
-| PriceTracker | `track-price` | Price comparison across stores |
-| NewsSummarizer | `summarize-news` | News with sentiment analysis |
-| Orchestrator | `plan-trip` | Multi-agent task decomposition |
-
-## Reputation
-
-Agents build trust through a weighted composite score (0-100):
-
-- **Task success rate** (35%)
-- **Peer ratings** (25%)
-- **Response speed** (15%)
-- **Longevity** (10%)
-- **Volume** (5%)
-- **Consistency** (10%)
-
-Anti-gaming: rating weight decays for repeated pairs, outlier ratings down-weighted, new agents start neutral.
 
 ## Roadmap
 
-- [x] Protocol, SDK, Registry, Reputation engine
-- [x] Dashboard with network graph and playground
-- [x] 8 example agents
-- [x] CLI scaffolding tool
+- [x] Protocol with 10 message types + Zod schemas
+- [x] Ed25519 cryptographic identity + message signing
+- [x] P2P agent communication (HTTP + WebSocket)
+- [x] `/.well-known/wyrd.json` agent identity standard
+- [x] Discovery registry with reputation scoring
+- [x] SDK: `defineCapability()` + `Agent` + `AgentClient`
+- [x] A2A Agent Card compatibility
+- [x] Dashboard with network graph + playground
+- [x] 8 example agents (3 with real APIs)
+- [x] Vercel deployment
 - [ ] Hosted public registry (`registry.wyrd.dev`)
-- [ ] A2A Agent Card compatibility
+- [ ] `npm publish` all packages
 - [ ] Auth & access control
 - [ ] Trust cards & policy negotiation
 - [ ] Payment / micropayment layer
+- [ ] Multi-registry federation
 - [ ] Agent marketplace
 
 See [docs/ROADMAP.md](docs/ROADMAP.md) for the full strategy.
