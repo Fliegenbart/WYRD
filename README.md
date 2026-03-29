@@ -35,17 +35,46 @@ Named after the Old Norse concept of **wyrd** — the interconnected web of fate
 
 ## Quickstart
 
-**Run the full demo (8 agents with real APIs):**
+**30-second demo — two agents, one task, real data, P2P:**
 
 ```bash
 git clone https://github.com/Fliegenbart/wyrd.git
 cd wyrd
-pnpm install
-pnpm build
-pnpm --filter @wyrd/demo run start
+pnpm install && pnpm build
+pnpm --filter @wyrd/demo run quick
 ```
 
-You'll see agents discover each other, exchange tasks, and collaborate — with **real weather data** (Open-Meteo), **real translations** (MyMemory), and **real news** (Google News RSS).
+```
+[1/5] Starting WeatherBot...
+  ✓ WeatherBot online at http://localhost:54492
+    Agent ID: AzCsWuABcAgpP9hzbAt9...
+
+[2/5] Reading /.well-known/wyrd.json ...
+  ✓ WYRD Card received:
+    name: WeatherBot
+    capabilities: get-weather
+    publicKey: AzCsWuABcAgpP9hzbAt9...
+
+[3/5] Sending task get-weather → Tokyo (direct P2P, no registry)
+  ✓ Result in 158ms:
+    city: Tokyo
+    temp: 10.9°C
+    conditions: Partly cloudy
+    source: Open-Meteo API (real data)
+
+[4/5] Verifying agent identity...
+  ✓ Response signed by: AzCsWuABcAgpP9hzbAt9...
+  ✓ Ed25519 public key matches WYRD card
+
+[5/5] Multi-city batch (parallel P2P tasks):
+  Berlin         4.8°C  Overcast
+  New York      11.6°C  Clear sky
+  Tokyo         10.9°C  Partly cloudy
+
+Done. Two agents. Real weather data. Peer-to-peer. No registry.
+```
+
+**Full demo (8 agents, orchestration):** `pnpm --filter @wyrd/demo run start`
 
 ## Peer-to-Peer
 

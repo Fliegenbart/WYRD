@@ -5,6 +5,7 @@
   "description": "WYRD multi-agent demo — watch agents discover and collaborate",
   "type": "module",
   "scripts": {
+    "quick": "tsx src/quick.ts",
     "demo": "tsx src/demo.ts",
     "start": "tsx src/start-all.ts"
   },
