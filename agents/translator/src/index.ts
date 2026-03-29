@@ -1,65 +1,22 @@
 import { Agent, defineCapability } from '@wyrd/sdk';
 import { z } from 'zod';
 
-// Simple translation dictionaries for demo
-const TRANSLATIONS: Record<string, Record<string, Record<string, string>>> = {
-  'en→ja': {
-    'hello': 'こんにちは',
-    'goodbye': 'さようなら',
-    'thank you': 'ありがとうございます',
-    'good morning': 'おはようございます',
-    'how are you': 'お元気ですか',
-    'please': 'お願いします',
-    'yes': 'はい',
-    'no': 'いいえ',
-  },
-  'en→de': {
-    'hello': 'Hallo',
-    'goodbye': 'Auf Wiedersehen',
-    'thank you': 'Danke schön',
-    'good morning': 'Guten Morgen',
-    'how are you': 'Wie geht es Ihnen',
-    'please': 'Bitte',
-    'yes': 'Ja',
-    'no': 'Nein',
-  },
-  'en→es': {
-    'hello': 'Hola',
-    'goodbye': 'Adiós',
-    'thank you': 'Gracias',
-    'good morning': 'Buenos días',
-    'how are you': '¿Cómo estás?',
-    'please': 'Por favor',
-    'yes': 'Sí',
-    'no': 'No',
-  },
-  'en→fr': {
-    'hello': 'Bonjour',
-    'goodbye': 'Au revoir',
-    'thank you': 'Merci',
-    'good morning': 'Bonjour',
-    'how are you': 'Comment allez-vous',
-    'please': "S'il vous plaît",
-    'yes': 'Oui',
-    'no': 'Non',
-  },
-};
-
 const LANGUAGES: Record<string, string> = {
-  en: 'English', ja: 'Japanese', de: 'German',
-  es: 'Spanish', fr: 'French', ko: 'Korean',
-  zh: 'Chinese', pt: 'Portuguese', it: 'Italian',
+  en: 'English', ja: 'Japanese', de: 'German', es: 'Spanish', fr: 'French',
+  ko: 'Korean', zh: 'Chinese', pt: 'Portuguese', it: 'Italian', nl: 'Dutch',
+  ru: 'Russian', ar: 'Arabic', hi: 'Hindi', sv: 'Swedish', pl: 'Polish',
+  tr: 'Turkish', da: 'Danish', fi: 'Finnish', no: 'Norwegian', cs: 'Czech',
 };
 
 const translateText = defineCapability({
   id: 'translate-text',
   name: 'Text Translation',
-  description: 'Translate text between languages',
+  description: 'Translate text between 20+ languages (powered by MyMemory API)',
   tags: ['translation', 'language', 'text', 'i18n'],
   input: z.object({
     text: z.string().describe('Text to translate'),
-    from: z.string().length(2).describe('Source language code (e.g., "en")'),
-    to: z.string().length(2).describe('Target language code (e.g., "ja")'),
+    from: z.string().min(2).max(2).describe('Source language code (e.g., "en")'),
+    to: z.string().min(2).max(2).describe('Target language code (e.g., "ja")'),
   }),
   output: z.object({
     original: z.string(),
@@ -69,39 +26,38 @@ const translateText = defineCapability({
     fromLanguage: z.string(),
     toLanguage: z.string(),
     confidence: z.number(),
+    source: z.string(),
   }),
   pricing: { model: 'free' },
   handler: async (input, ctx) => {
-    ctx.progress(20, `Translating from ${LANGUAGES[input.from] ?? input.from} to ${LANGUAGES[input.to] ?? input.to}...`);
+    const fromLang = LANGUAGES[input.from] ?? input.from;
+    const toLang = LANGUAGES[input.to] ?? input.to;
+    ctx.progress(20, `Translating from ${fromLang} to ${toLang}...`);
 
-    await new Promise((r) => setTimeout(r, 150));
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(input.text)}&langpair=${input.from}|${input.to}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Translation API error: ${res.status}`);
 
-    const key = `${input.from}→${input.to}`;
-    const dict = TRANSLATIONS[key];
-    const lowerText = input.text.toLowerCase().trim();
+    const data = await res.json() as any;
+    ctx.progress(80, 'Processing response...');
 
-    ctx.progress(70, 'Processing translation...');
-
-    let translated: string;
-    let confidence: number;
-
-    if (dict && dict[lowerText]) {
-      translated = dict[lowerText];
-      confidence = 0.98;
-    } else {
-      // For demo: reverse the text + add language tag as "translation"
-      translated = `[${input.to}] ${input.text.split('').reverse().join('')}`;
-      confidence = 0.3;
+    if (data.responseStatus !== 200) {
+      throw new Error(`Translation failed: ${data.responseDetails || 'Unknown error'}`);
     }
+
+    // Get the best match
+    const translated = data.responseData.translatedText;
+    const match = data.responseData.match ?? 0;
 
     return {
       original: input.text,
       translated,
       from: input.from,
       to: input.to,
-      fromLanguage: LANGUAGES[input.from] ?? input.from,
-      toLanguage: LANGUAGES[input.to] ?? input.to,
-      confidence,
+      fromLanguage: fromLang,
+      toLanguage: toLang,
+      confidence: Math.min(match, 1),
+      source: 'MyMemory (mymemory.translated.net)',
     };
   },
 });
@@ -111,17 +67,17 @@ const port = Number(process.env['PORT'] ?? 4212);
 
 const agent = new Agent({
   name: 'TranslatorBot',
-  description: 'Translates text between multiple languages',
+  description: 'Real-time translation across 20+ languages powered by MyMemory',
   capabilities: [translateText],
   registry: registryUrl,
   port,
 });
 
 agent.on('started', ({ id }) => {
-  console.log(`🌐 TranslatorBot online`);
+  console.log(`🌐 TranslatorBot online (real API)`);
   console.log(`   ID: ${id}`);
   console.log(`   Port: ${port}`);
-  console.log(`   Registry: ${registryUrl}`);
+  console.log(`   Data: MyMemory (mymemory.translated.net)`);
 });
 
 agent.on('task:start', ({ taskId, capabilityId }) => {
@@ -132,14 +88,6 @@ agent.on('task:complete', ({ taskId, durationMs }) => {
   console.log(`   ✅ Task ${taskId.slice(0, 8)}... done in ${durationMs}ms`);
 });
 
-agent.on('error', (err) => {
-  console.error(`   ❌ Error:`, err.message);
-});
-
+agent.on('error', (err) => { console.error(`   ❌ Error:`, err.message); });
 agent.start().catch(console.error);
-
-process.on('SIGINT', async () => {
-  console.log('\n   Shutting down TranslatorBot...');
-  await agent.stop();
-  process.exit(0);
-});
+process.on('SIGINT', async () => { await agent.stop(); process.exit(0); });
