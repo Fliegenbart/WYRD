@@ -1,0 +1,31 @@
+{
+  "name": "@agentnet/transport",
+  "version": "0.1.0",
+  "description": "AgentNet WebSocket transport layer",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts",
+    "dev": "tsup src/index.ts --format esm --dts --watch",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "ws": "^8.18.0",
+    "@agentnet/protocol": "workspace:*",
+    "@agentnet/identity": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}

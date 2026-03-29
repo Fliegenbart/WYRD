@@ -1,0 +1,58 @@
+services:
+  registry:
+    build:
+      context: .
+      dockerfile: packages/registry/Dockerfile
+    ports:
+      - '4200:4200'
+    environment:
+      PORT: '4200'
+      DB_PATH: '/data/registry.db'
+    volumes:
+      - registry-data:/data
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: packages/dashboard/Dockerfile
+    ports:
+      - '3000:3000'
+    environment:
+      NEXT_PUBLIC_REGISTRY_URL: 'http://registry:4200'
+    depends_on:
+      - registry
+
+  weather:
+    build:
+      context: .
+      dockerfile: agents/weather/Dockerfile
+    environment:
+      AGENTNET_REGISTRY_URL: 'http://registry:4200'
+      PORT: '4211'
+    depends_on:
+      - registry
+
+  translator:
+    build:
+      context: .
+      dockerfile: agents/translator/Dockerfile
+    environment:
+      AGENTNET_REGISTRY_URL: 'http://registry:4200'
+      PORT: '4212'
+    depends_on:
+      - registry
+
+  orchestrator:
+    build:
+      context: .
+      dockerfile: agents/orchestrator/Dockerfile
+    environment:
+      AGENTNET_REGISTRY_URL: 'http://registry:4200'
+      PORT: '4210'
+    depends_on:
+      - registry
+      - weather
+      - translator
+
+volumes:
+  registry-data:
