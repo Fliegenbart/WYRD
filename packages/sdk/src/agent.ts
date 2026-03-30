@@ -86,8 +86,17 @@ export class Agent extends EventEmitter {
 
     if (this.registryInterval) clearInterval(this.registryInterval);
 
-    for (const [, controller] of this.activeTasks) {
-      controller.abort();
+    // Graceful shutdown: wait for active tasks to finish (max 5s)
+    if (this.activeTasks.size > 0) {
+      this.emit('draining', { activeTasks: this.activeTasks.size });
+      const drainTimeout = setTimeout(() => {
+        for (const [, controller] of this.activeTasks) controller.abort();
+      }, 5000);
+      // Wait for tasks to complete
+      while (this.activeTasks.size > 0) {
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      clearTimeout(drainTimeout);
     }
     this.activeTasks.clear();
 
@@ -109,7 +118,7 @@ export class Agent extends EventEmitter {
 
   /** The agent's HTTP base URL */
   get url(): string {
-    return `http://localhost:${this._httpPort}`;
+    return this.config.url ?? `http://localhost:${this._httpPort}`;
   }
 
   /** The agent's WebSocket endpoint URL */
@@ -171,22 +180,32 @@ export class Agent extends EventEmitter {
 
     // HTTP Task endpoint — allows direct task submission without WebSocket
     app.post('/v1/task', async (c) => {
+      // Rate limit
+      const maxConcurrent = this.config.maxConcurrentTasks ?? 100;
+      if (this.activeTasks.size >= maxConcurrent) {
+        return c.json({ error: 'Too many concurrent tasks', limit: maxConcurrent }, 429);
+      }
+
       const body = await c.req.json();
       const { capabilityId, input, taskId: providedTaskId } = body;
 
       const capability = this.capabilities.get(capabilityId);
       if (!capability) {
-        return c.json({ error: 'Unknown capability', capabilityId }, 404);
+        return c.json({ error: 'Unknown capability', capabilityId, available: Array.from(this.capabilities.keys()) }, 404);
       }
 
       const inputResult = capability.input.safeParse(input);
       if (!inputResult.success) {
-        return c.json({ error: 'Invalid input', details: inputResult.error.message }, 400);
+        return c.json({ error: 'Invalid input', details: inputResult.error.issues }, 400);
       }
 
       const taskId = providedTaskId ?? ulid();
       const controller = new AbortController();
       this.activeTasks.set(taskId, controller);
+
+      // Handler timeout
+      const timeout = this.config.taskTimeout ?? 30_000;
+      const timer = setTimeout(() => controller.abort(), timeout);
 
       const progressUpdates: Array<{ percent: number; status: string }> = [];
 
@@ -211,6 +230,7 @@ export class Agent extends EventEmitter {
       try {
         this.emit('task:start', { taskId, capabilityId });
         const output = await capability.handler(inputResult.data, ctx);
+        clearTimeout(timer);
         const durationMs = Date.now() - startTime;
         this.emit('task:complete', { taskId, output, durationMs });
 
@@ -223,16 +243,18 @@ export class Agent extends EventEmitter {
           agent: { id: this.identity.id, name: this.config.name },
         });
       } catch (err) {
+        clearTimeout(timer);
         const durationMs = Date.now() - startTime;
         const error = err instanceof Error ? err : new Error(String(err));
+        const isTimeout = controller.signal.aborted;
         this.emit('task:error', { taskId, error });
 
         return c.json({
           taskId,
           status: 'error',
-          error: { code: 'HANDLER_ERROR', message: error.message },
+          error: { code: isTimeout ? 'TIMEOUT' : 'HANDLER_ERROR', message: isTimeout ? `Task timed out after ${timeout}ms` : error.message },
           metrics: { durationMs },
-        }, 500);
+        }, isTimeout ? 408 : 500);
       } finally {
         this.activeTasks.delete(taskId);
       }

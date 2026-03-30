@@ -9,14 +9,20 @@ export interface AgentConfig {
   description?: string;
   /** Capabilities this agent provides */
   capabilities: CapabilityDefinition<any, any>[];
+  /** Public URL where this agent is reachable (e.g. "https://my-agent.fly.dev"). If not set, defaults to http://localhost:{port} */
+  url?: string;
   /** Registry URL to announce to */
   registry?: string;
-  /** WebSocket listen port (default: auto-assigned) */
+  /** HTTP listen port (default: auto-assigned) */
   port?: number;
   /** Pre-loaded identity (auto-generated if not provided) */
   identity?: AgentIdentity;
   /** Private key hex (alternative to identity) */
   privateKey?: string;
+  /** Handler timeout in ms (default: 30000) */
+  taskTimeout?: number;
+  /** Max concurrent tasks (default: 100) */
+  maxConcurrentTasks?: number;
 }
 
 export interface CapabilityDefinition<
