@@ -33,5 +33,26 @@
     "tsx": "^4.19.0",
     "typescript": "^5.8.0",
     "vitest": "^3.1.0"
-  }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Fliegenbart/WYRD.git",
+    "directory": "packages/registry"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "wyrd",
+    "agent",
+    "protocol",
+    "p2p",
+    "ai",
+    "agent-to-agent"
+  ]
 }
